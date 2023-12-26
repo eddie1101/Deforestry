@@ -1,0 +1,8 @@
+{
+  "remote_chopper_sound": {
+    "sounds": [
+      "deforestry:remote_chopper_sound"
+    ],
+    "subtitle": "Click, Beep"
+  }
+}

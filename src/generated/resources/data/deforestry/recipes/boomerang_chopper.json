@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "deforestry:boomerang"
+    },
+    {
+      "item": "minecraft:diamond_axe"
+    }
+  ],
+  "result": {
+    "item": "deforestry:boomerang_chopper"
+  }
+}

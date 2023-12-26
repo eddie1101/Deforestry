@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "a": {
+      "item": "minecraft:diamond_axe"
+    },
+    "i": {
+      "item": "minecraft:iron_ingot"
+    },
+    "r": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "pattern": [
+    "i a",
+    "iii",
+    "iri"
+  ],
+  "result": {
+    "item": "deforestry:remote_chopper"
+  }
+}

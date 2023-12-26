@@ -1,5 +1,11 @@
-// 1.20.4	2023-12-23T20:57:05.2273162	Recipes
-866b6a476c7f200deca0d1da885e2a5d84e941d0 data/inventive_choppers/advancements/recipes/tools/felling_axe.json
-b271522a84cb31bc46ebb7bf8662112495ea21c8 data/inventive_choppers/advancements/recipes/tools/remote_chopper.json
-c3ffb518042c35f249f340f0cb97e4a62bf82f22 data/inventive_choppers/recipes/felling_axe.json
-6fb52710255ab43e564f8f55dafba962e76c738c data/inventive_choppers/recipes/remote_chopper.json
+// 1.20.4	2023-12-26T01:21:36.6026254	Recipes
+cc8560e258ea0730cbe3ebf88b1255d51f1177ab data/deforestry/advancements/recipes/combat/boomerang.json
+5dc05fe4516188fff5fff211a7b65e5fd98bf555 data/deforestry/advancements/recipes/tools/boomerang_chopper.json
+be84145abf2d95d6e6a13c28bf05b2da56530fc8 data/deforestry/advancements/recipes/tools/chainsaw.json
+1716a5c6a2d49435fe321af43f1ddd672ed630a3 data/deforestry/advancements/recipes/tools/felling_axe.json
+0e52e64e9768662b05d6a89dbea63b072e6aebbf data/deforestry/advancements/recipes/tools/remote_chopper.json
+991359e84d8d7c4c3f4b7061e8ca2f6f5241f4bc data/deforestry/recipes/boomerang.json
+d8057f762f9d923534eb42d9adb44342c7e71f5f data/deforestry/recipes/boomerang_chopper.json
+0e1d91f1792acef1fe13169025c6ed6fff941b89 data/deforestry/recipes/chainsaw.json
+9b805bd3a81a80bf491e38be2d97439930600eaa data/deforestry/recipes/felling_axe.json
+aa724fd9619ee370af65aace7e39aa6af8de57cd data/deforestry/recipes/remote_chopper.json

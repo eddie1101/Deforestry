@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "p": {
+      "tag": "minecraft:planks"
+    },
+    "s": {
+      "tag": "minecraft:wooden_slabs"
+    }
+  },
+  "pattern": [
+    "sp ",
+    "  p",
+    "sp "
+  ],
+  "result": {
+    "item": "deforestry:boomerang"
+  }
+}
