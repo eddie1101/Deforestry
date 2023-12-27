@@ -4,5 +4,5 @@
   "item.deforestry.chainsaw": "Chainsaw",
   "item.deforestry.felling_axe": "Felling Axe",
   "item.deforestry.remote_chopper": "Remote Chopper",
-  "itemGroup.deforestry_tab": "Deforestry"
+  "tab.deforestry.deforestry_tab": "Deforestry"
 }

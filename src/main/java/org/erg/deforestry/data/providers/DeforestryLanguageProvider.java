@@ -18,7 +18,7 @@ public class DeforestryLanguageProvider extends LanguageProvider {
         add(DeforestryItems.CHAINSAW.get(), "Chainsaw");
         add(DeforestryItems.BOOMERANG.get(), "Boomerang");
         add(DeforestryItems.BOOMERANG_CHOPPER.get(), "Boomerang Chopper");
-        add("itemGroup.deforestry_tab", "Deforestry");
+        add("tab.deforestry.deforestry_tab", "Deforestry");
     }
 
 

@@ -19,7 +19,7 @@ import java.util.*;
 public class FellingAxeItem extends AxeItem {
 
     public FellingAxeItem(Item.Properties props) {
-        super(Tiers.IRON, 12 /* Attack damage */, -5 /* Attack Speed*/, props.durability(850));
+        super(Tiers.IRON, 12.0f /* Base Attack damage */, -3.5f /* Base Attack Speed*/, props.durability(850));
     }
 
     @Override
