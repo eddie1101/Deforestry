@@ -8,20 +8,21 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Stack;
+import java.util.*;
 
-public class InventiveChoppersUtil {
+public class DeforestryUtil {
 
     @NotNull
-    public static ArrayList<BlockPos> getLogsInTree(Block logType, BlockPos origin, Level level) {
+    public static List<BlockPos> getLogsInTree(Block logType, BlockPos origin, Level level) {
         Set<BlockPos> logs = new HashSet<>();
         Stack<BlockPos> toSearch = new Stack<>();
         toSearch.add(origin);
 
         while(!toSearch.isEmpty()) {
+
+            if(logs.size() >= Config.maxGlobalChop) {
+                break;
+            }
 
             BlockPos center = toSearch.pop();
 
@@ -38,7 +39,7 @@ public class InventiveChoppersUtil {
             sb.append("\n").append("center: ").append(center).append("\n");
 
             AABB aabb = AABB.encapsulatingFullBlocks(center.below().west().south(), center.above().east().north());
-            ArrayList<BlockPos> candidates = getSurroundingBlocks(aabb, center);
+            List<BlockPos> candidates = getSurroundingBlocks(aabb, center);
 
             sb.append("Candidates: ");
             for(BlockPos pos: candidates) {
@@ -55,15 +56,14 @@ public class InventiveChoppersUtil {
 
             logs.add(center);
 
-            if(Config.doVerboseLogging)
-                Deforestry.LOGGER.debug(sb.toString());
+            Deforestry.LOGGER.debug(sb.toString());
         }
 
         return new ArrayList<>(logs);
     }
 
     @NotNull
-    public static ArrayList<BlockPos> getSurroundingBlocks(AABB aabb, BlockPos center) {
+    public static List<BlockPos> getSurroundingBlocks(AABB aabb, BlockPos center) {
         ArrayList<BlockPos> candidates = new ArrayList<>();
 
         for(int x = (int) aabb.maxX - 1; x >= aabb.minX; x--) {

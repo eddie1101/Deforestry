@@ -12,5 +12,6 @@ public class DeforestrySounds {
     public static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, MODID);
 
     public static final DeferredHolder<SoundEvent, SoundEvent> REMOTE_CHOPPER_SOUND = SOUNDS.register("remote_chopper_sound", (rloc) -> SoundEvent.createFixedRangeEvent(rloc, 5f));
+    public static final DeferredHolder<SoundEvent, SoundEvent> CHAINSAW_SOUND = SOUNDS.register("chainsaw_sound", (rloc) -> SoundEvent.createFixedRangeEvent(rloc, 10f));
 
 }

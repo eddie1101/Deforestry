@@ -7,6 +7,7 @@ import net.neoforged.neoforge.common.data.SoundDefinitionsProvider;
 import org.erg.deforestry.common.registries.DeforestrySounds;
 
 import static org.erg.deforestry.Deforestry.MODID;
+import static org.erg.deforestry.common.registries.DeforestrySounds.CHAINSAW_SOUND;
 import static org.erg.deforestry.common.registries.DeforestrySounds.REMOTE_CHOPPER_SOUND;
 
 public class DeforestrySoundDefinitionsProvider extends SoundDefinitionsProvider {
@@ -20,6 +21,11 @@ public class DeforestrySoundDefinitionsProvider extends SoundDefinitionsProvider
         add(REMOTE_CHOPPER_SOUND.get(), definition()
                 .subtitle("Click, Beep")
                 .with(sound(REMOTE_CHOPPER_SOUND.getId()))
+        );
+
+        add(CHAINSAW_SOUND.get(), definition()
+                .subtitle("Chainsaw revving")
+                .with(sound(CHAINSAW_SOUND.getId()))
         );
     }
 

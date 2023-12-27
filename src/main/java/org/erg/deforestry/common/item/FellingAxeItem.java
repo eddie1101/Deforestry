@@ -12,14 +12,14 @@ import net.minecraft.world.item.Tiers;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import org.erg.deforestry.common.util.InventiveChoppersUtil;
+import org.erg.deforestry.common.util.DeforestryUtil;
 
 import java.util.*;
 
 public class FellingAxeItem extends AxeItem {
 
     public FellingAxeItem(Item.Properties props) {
-        super(Tiers.IRON, 11 /* Attack damage */, -3 /* Attack Speed*/, props.durability(850));
+        super(Tiers.IRON, 12 /* Attack damage */, -5 /* Attack Speed*/, props.durability(850));
     }
 
     @Override
@@ -30,7 +30,7 @@ public class FellingAxeItem extends AxeItem {
 
                 Block logType = blockBroken.getBlock();
 
-                ArrayList<BlockPos> logs = InventiveChoppersUtil.getLogsInTree(logType, pos, level);
+                List<BlockPos> logs = DeforestryUtil.getLogsInTree(logType, pos, level);
 
                 int numLogs = logs.size();
                 int logsToChop = Math.min(Math.min(heldItem.getMaxDamage() - heldItem.getDamageValue(), numLogs), Config.maxFellingAxeChop);

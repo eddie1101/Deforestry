@@ -1,6 +1,5 @@
 package org.erg.deforestry.common.item;
 
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.level.block.Block;
@@ -17,9 +16,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.HitResult;
 import org.erg.deforestry.common.registries.DeforestrySounds;
-import org.erg.deforestry.common.util.InventiveChoppersUtil;
+import org.erg.deforestry.common.util.DeforestryUtil;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class RemoteChopperItem extends Item {
 
@@ -45,7 +45,7 @@ public class RemoteChopperItem extends Item {
 
                     Block logType = target.getBlock();
 
-                    ArrayList<BlockPos> logs = InventiveChoppersUtil.getLogsInTree(logType, pos, level);
+                    List<BlockPos> logs = DeforestryUtil.getLogsInTree(logType, pos, level);
 
                     int numLogs = logs.size();
                     int logsToChop = Math.min(Math.min(stack.getMaxDamage() - stack.getDamageValue(), numLogs), Config.maxRemoteChop);
@@ -53,7 +53,7 @@ public class RemoteChopperItem extends Item {
                         level.destroyBlock(logs.get(i), true);
                     }
 
-                    player.getCooldowns().addCooldown(this, 20);
+                    player.getCooldowns().addCooldown(this, Config.remoteChopperCooldown);
                     level.playSound((Player) null, player.getX(), player.getY(), player.getZ(), DeforestrySounds.REMOTE_CHOPPER_SOUND.get(), SoundSource.PLAYERS);
                     return InteractionResultHolder.success(stack);
                 }

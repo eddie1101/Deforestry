@@ -1,4 +1,10 @@
 {
+  "chainsaw_sound": {
+    "sounds": [
+      "deforestry:chainsaw_sound"
+    ],
+    "subtitle": "Chainsaw revving"
+  },
   "remote_chopper_sound": {
     "sounds": [
       "deforestry:remote_chopper_sound"
