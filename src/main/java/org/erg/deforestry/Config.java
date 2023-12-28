@@ -48,6 +48,14 @@ public class Config
             .comment("The number of ticks in between remote choper uses (20 ticks/second).\n[0-72000]")
             .defineInRange("remoteChopperCooldown", 30, 0, 72000);
 
+    private static final ModConfigSpec.IntValue BOOMERANG_RANGE = BUILDER
+            .comment("The range in blocks that the boomerang can travel from its parent.\n[0-512]")
+            .defineInRange("boomerangRange", 16, 0, 512);
+
+    private static final ModConfigSpec.IntValue BOOMERANG_LIFESPAN = BUILDER
+            .comment("The time in ticks (20 ticks/second) that the boomerang can attempt to seek its owner for.\n[0-1200]")
+            .defineInRange("boomerangLifespan", 200, 0, 1200);
+
     static final ModConfigSpec SPEC = BUILDER.build();
 
     public static int maxGlobalChop;
@@ -58,6 +66,9 @@ public class Config
     public static int chainsawCooldown;
     public static float remoteChopperRange;
     public static int remoteChopperCooldown;
+    public static int boomerangRange;
+    public static int boomerangLifespan;
+
     private static boolean validateItemName(final Object obj)
     {
         return obj instanceof String itemName && BuiltInRegistries.ITEM.containsKey(new ResourceLocation(itemName));
@@ -73,7 +84,12 @@ public class Config
 
         chainsawSpeed = CHAINSAW_SPEED.get();
         chainsawCooldown = CHAINSAW_COOLDOWN.get();
+
         remoteChopperRange = (float) REMOTE_CHOPPER_RANGE.get();
         remoteChopperCooldown = REMOTE_CHOPPER_COOLDOWN.get();
+
+        boomerangRange = BOOMERANG_RANGE.get();
+        boomerangLifespan = BOOMERANG_LIFESPAN.get();
+
     }
 }

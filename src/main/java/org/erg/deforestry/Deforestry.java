@@ -1,10 +1,8 @@
 package org.erg.deforestry;
 
+import org.erg.deforestry.client.ClientRegistration;
 import org.erg.deforestry.common.network.DeforestryPacketHandler;
-import org.erg.deforestry.common.registries.DeforestryBlocks;
-import org.erg.deforestry.common.registries.DeforestryCreativeModeTabs;
-import org.erg.deforestry.common.registries.DeforestryItems;
-import org.erg.deforestry.common.registries.DeforestrySounds;
+import org.erg.deforestry.common.registries.*;
 import org.erg.deforestry.data.DeforestryDataGenerator;
 import com.mojang.logging.LogUtils;
 import net.neoforged.api.distmarker.Dist;
@@ -31,11 +29,13 @@ public class Deforestry
     {
         modEventBus.register(new DeforestryDataGenerator());
         modEventBus.register(new DeforestryPacketHandler());
+        modEventBus.register(ClientRegistration.class);
 
         modEventBus.addListener(this::commonSetup);
 
         DeforestryBlocks.BLOCKS.register(modEventBus);
         DeforestryItems.ITEMS.register(modEventBus);
+        DeforestryEntityTypes.ENTITIES.register(modEventBus);
         DeforestryCreativeModeTabs.CREATIVE_MODE_TABS.register(modEventBus);
         DeforestrySounds.SOUNDS.register(modEventBus);
 
@@ -55,13 +55,4 @@ public class Deforestry
 
     }
 
-    @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
-    public static class ClientModEvents
-    {
-        @SubscribeEvent
-        public static void onClientSetup(FMLClientSetupEvent event)
-        {
-
-        }
-    }
 }

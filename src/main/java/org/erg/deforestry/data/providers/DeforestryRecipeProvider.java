@@ -50,9 +50,9 @@ public class DeforestryRecipeProvider extends RecipeProvider {
                 .save(output);
 
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, DeforestryItems.CHAINSAW)
-                .pattern("  b")
-                .pattern(" gg")
-                .pattern("iir")
+                .pattern("i b")
+                .pattern(" ig")
+                .pattern(" gr")
                 .define('b', ItemTags.STONE_BUTTONS)
                 .define('g', Items.GOLD_INGOT)
                 .define('i', Items.IRON_INGOT)

@@ -1,5 +1,6 @@
 package org.erg.deforestry.common.util;
 
+import net.minecraft.resources.ResourceLocation;
 import org.erg.deforestry.Config;
 import org.erg.deforestry.Deforestry;
 import net.minecraft.core.BlockPos;
@@ -10,8 +11,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static org.erg.deforestry.Deforestry.MODID;
+
 public class DeforestryUtil {
 
+    public static double clamp(double min, double val, double max) {
+        return Math.max(Math.min(val, max), min);
+    }
+
+    public static ResourceLocation getDeforestryRLFrom(String location) {
+        return new ResourceLocation(MODID + ":" + location);
+    }
     @NotNull
     public static List<BlockPos> getLogsInTree(Block logType, BlockPos origin, Level level) {
         Set<BlockPos> logs = new HashSet<>();
