@@ -26,12 +26,12 @@ import org.erg.deforestry.common.registries.DeforestrySounds;
 public class BoomerangEntity extends Projectile {
 
     private static final int BASE_DAMAGE = 6;
-    private static final double P = 0.003d, I = 15.0000d, D = 0.0500d;
+    private static final double P = 0.003d, I = 0.0025d, D = 0.0875d;
     private Vec3 positionErrorIntegral = new Vec3(0.0d, 0.0d, 0.0d);
 
     private boolean moving = true;
-    private int tickStamp = 0;
     private int flyingSoundPlayed = 0;
+    private int tickStamp = 0;
 
     private final ItemStack boomerangItemStack;
 
@@ -177,8 +177,8 @@ public class BoomerangEntity extends Projectile {
 
             Vec3 positionDelta = pos.subtract(targetPos);
 
-            int timeDelta = this.tickCount - this.tickStamp;
-            this.positionErrorIntegral.add(positionDelta.scale(timeDelta)./*hacky hacky hack hack hack*/multiply(positionErrorIntegral));
+            double timeDelta = 0.05; //20 ticks per second
+            positionErrorIntegral = positionErrorIntegral.add(positionDelta.scale(timeDelta));
 
             Vec3 acceleration = positionDelta.scale(-P).add(positionErrorIntegral.scale(-I)).add(velocity.scale(-D));
             this.setDeltaMovement(this.getDeltaMovement().add(acceleration));
@@ -192,7 +192,9 @@ public class BoomerangEntity extends Projectile {
                 }
             }
 
-            if(timeDelta > Config.boomerangLifespan) {
+            int timeAlive = tickCount - tickStamp;
+
+            if(timeAlive > Config.boomerangLifespan) {
                 this.moving = false;
                 this.nextState = BoomerangState.RETURNED;
             }
@@ -214,7 +216,7 @@ public class BoomerangEntity extends Projectile {
 
     public void prepareToHome() {
         this.setDeltaMovement(this.getDeltaMovement().scale(-1.0f));
-        this.tickStamp = tickCount;
+        tickStamp = tickCount;
         this.positionErrorIntegral = new Vec3(0.0d, 0.0d, 0.0d);
     }
 
