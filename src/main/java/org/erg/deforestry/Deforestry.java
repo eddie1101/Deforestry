@@ -21,12 +21,12 @@ import org.slf4j.Logger;
 //TODO: (we don't have a kanban board so comments will do)
 // ----------
 // BOOMERANG:
-// Make throw force based on duration item is used
-// Improve collision detection with player
-// Make sounds *better*
+// Don't reverse velocity when boomerang goes out of range, just let PID take over
+// Maybe add a return radius based on launched power?
 // Make bounces appropriate for the side of the block that they hit
 // Add collisions during returning state (block and entity?)
-// Tune PID?
+// Make boomerang pitch and roll with angular velocity
+// Make boomerang damage depend on relative velocity of hit entity
 // ----------
 // Chopper Util:
 // Make chops remove leaves in range of the appropriate type for the wood being chopped

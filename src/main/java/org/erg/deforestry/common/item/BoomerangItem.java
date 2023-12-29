@@ -10,6 +10,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
+import org.erg.deforestry.Deforestry;
 import org.erg.deforestry.common.entity.BoomerangEntity;
 import org.erg.deforestry.common.registries.DeforestryEntityTypes;
 import org.erg.deforestry.common.registries.DeforestrySounds;
@@ -29,6 +30,15 @@ public class BoomerangItem extends Item {
     }
 
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int usedDuration) {
+        float durationDelta = (float) this.getUseDuration(stack) - usedDuration;
+        float power = durationDelta / 20.0f;
+        power = (power * power + power * 2.0f) / 3.0f;
+        if(power > 1.0f) {
+            power = 1.0f;
+        } else if(power < 0.2f) {
+            return;
+        }
+
         BoomerangEntity boomerang = new BoomerangEntity(
                 (EntityType<? extends BoomerangEntity>) DeforestryEntityTypes.BOOMERANG_ENTITY.get(),
                 level,
@@ -38,10 +48,10 @@ public class BoomerangItem extends Item {
         if(entity instanceof Player player) {
             player.getInventory().removeItem(stack);
         }
-        float durationDelta = (((float) this.getUseDuration(stack) - usedDuration) % 20) / 20.0f;
-        boomerang.tossFromRotation(entity, entity.getXRot(), entity.getYRot(), 0.0f, durationDelta * 2.0f, 1.0f);
+
+        boomerang.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), 0.0f, power * 2.0f, 0.5f + power / 2.0f);
         level.addFreshEntity(boomerang);
-        level.playSound((Player) null, entity, DeforestrySounds.BOOMERANG_THROW.get(), SoundSource.PLAYERS, 1.0f, 1.0f);
+        level.playSound((Player) null, entity, DeforestrySounds.BOOMERANG_THROW.get(), SoundSource.PLAYERS, 0.5f + power, 1.0f + power / 2.0f);
     }
 
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {

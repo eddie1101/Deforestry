@@ -26,7 +26,7 @@ import org.erg.deforestry.common.registries.DeforestrySounds;
 public class BoomerangEntity extends Projectile {
 
     private static final int BASE_DAMAGE = 6;
-    private static final double P = 0.003d, I = 0.0025d, D = 0.0875d;
+    private static final double P = 0.0072d, I = 0.0012d, D = 0.0650d;
     private Vec3 positionErrorIntegral = new Vec3(0.0d, 0.0d, 0.0d);
 
     private boolean moving = true;
@@ -66,23 +66,9 @@ public class BoomerangEntity extends Projectile {
         this(entityType, level, 0.0d, 0.0d, 0.0d);
     }
 
-    public void tossFromRotation(Entity entity, float xRotation, float yRotation, float zRotation, float power, float scale) {
-        float f = -Mth.sin(yRotation * 0.017453292F) * Mth.cos(xRotation * 0.017453292F);
-        float f1 = -Mth.sin((xRotation + zRotation) * 0.017453292F);
-        float f2 = Mth.cos(yRotation * 0.017453292F) * Mth.cos(xRotation * 0.017453292F);
-        this.toss(f, f1, f2, power, scale);
-        Vec3 entityVelocity = entity.getDeltaMovement();
-        this.setDeltaMovement(this.getDeltaMovement().add(entityVelocity.x, entity.onGround() ? 0.0 : entityVelocity.y, entityVelocity.z));
-    }
-
-    public void toss(double xAngle, double yAngle, double zAngle, float power, float scale) {
-        Vec3 vec3 = (new Vec3(xAngle, yAngle, zAngle)).normalize().add(this.random.triangle(0.0, 0.0172275 * (double)power), this.random.triangle(0.0, 0.0172275 * (double)power), this.random.triangle(0.0, 0.0172275 * (double)power)).scale((double)scale);
-        this.setDeltaMovement(vec3);
-        double d0 = vec3.horizontalDistance();
-        this.setYRot((float)(Mth.atan2(vec3.x, vec3.z) * 180.0 / 3.1415927410125732));
-        this.setXRot((float)(Mth.atan2(vec3.y, d0) * 180.0 / 3.1415927410125732));
-        this.yRotO = this.getYRot();
-        this.xRotO = this.getXRot();
+    @Override
+    public void shoot(double xAngle, double yAngle, double zAngle, float power, float scale) {
+        super.shoot(xAngle, yAngle, zAngle, power, scale);
         this.moving = true;
     }
 
@@ -192,6 +178,11 @@ public class BoomerangEntity extends Projectile {
                 }
             }
 
+            if(this.getBoundingBox().intersects(ownerEntity.getBoundingBox().inflate(0.25d))) {
+                this.moving = false;
+                this.nextState = BoomerangState.RETURNED;
+            }
+
             int timeAlive = tickCount - tickStamp;
 
             if(timeAlive > Config.boomerangLifespan) {
@@ -205,9 +196,6 @@ public class BoomerangEntity extends Projectile {
         if (getOwner() instanceof Player player) {
             if (!player.addItem(boomerangItemStack)) {
                 level().addFreshEntity(new ItemEntity(this.level(), player.getX(), player.getY(), player.getZ(), boomerangItemStack));
-                if(level().isClientSide) {
-                    level().playSound(player, player, DeforestrySounds.BOOMERANG_RETURN.get(), SoundSource.PLAYERS, 1.0f, 1.0f);
-                }
             }
         }
 

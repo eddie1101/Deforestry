@@ -41,11 +41,6 @@ public class DeforestrySoundDefinitionsProvider extends SoundDefinitionsProvider
                 .subtitle("Boomerang impacts block")
                 .with(sound(BOOMERANG_CLANG.getId()))
         );
-
-        add(BOOMERANG_RETURN.get(), definition()
-                .subtitle("Boomerang returns")
-                .with(sound(BOOMERANG_RETURN.getId()))
-        );
     }
 
 }
