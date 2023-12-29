@@ -1,7 +1,9 @@
 package org.erg.deforestry.common.entity;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -10,6 +12,7 @@ import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -17,14 +20,18 @@ import net.neoforged.neoforge.event.EventHooks;
 import org.erg.deforestry.Config;
 import org.erg.deforestry.Deforestry;
 import org.erg.deforestry.common.registries.DeforestryItems;
+import org.erg.deforestry.common.registries.DeforestrySounds;
+
 
 public class BoomerangEntity extends Projectile {
 
-    private static final double P = 0.0005d, I = 0.1000d, D = 0.0005d;
+    private static final int BASE_DAMAGE = 6;
+    private static final double P = 0.003d, I = 15.0000d, D = 0.0500d;
     private Vec3 positionErrorIntegral = new Vec3(0.0d, 0.0d, 0.0d);
 
     private boolean moving = true;
     private int tickStamp = 0;
+    private int flyingSoundPlayed = 0;
 
     private final ItemStack boomerangItemStack;
 
@@ -48,7 +55,7 @@ public class BoomerangEntity extends Projectile {
     }
 
     public BoomerangEntity(EntityType<? extends BoomerangEntity> type, Level level, LivingEntity owner, ItemStack boomerang) {
-        this(type, level, owner, boomerang, owner.getX(), owner.getEyeY(), owner.getZ());
+        this(type, level, owner, boomerang, owner.getX(), owner.getEyeY() - 0.5f, owner.getZ());
     }
 
     public BoomerangEntity(EntityType<? extends BoomerangEntity> type, Level level, double x, double y, double z) {
@@ -63,7 +70,7 @@ public class BoomerangEntity extends Projectile {
         float f = -Mth.sin(yRotation * 0.017453292F) * Mth.cos(xRotation * 0.017453292F);
         float f1 = -Mth.sin((xRotation + zRotation) * 0.017453292F);
         float f2 = Mth.cos(yRotation * 0.017453292F) * Mth.cos(xRotation * 0.017453292F);
-        this.toss((double)f, (double)f1, (double)f2, power, scale);
+        this.toss(f, f1, f2, power, scale);
         Vec3 entityVelocity = entity.getDeltaMovement();
         this.setDeltaMovement(this.getDeltaMovement().add(entityVelocity.x, entity.onGround() ? 0.0 : entityVelocity.y, entityVelocity.z));
     }
@@ -83,98 +90,126 @@ public class BoomerangEntity extends Projectile {
     public void tick() {
         super.tick();
 
-        if(this.moving)
+        //This makes me hate myself even more
+        if(tickCount - flyingSoundPlayed > 24) {
+            level().playSound(null, this.position().x, this.position().y, this.position().z, DeforestrySounds.BOOMERANG_FLYING.get(), SoundSource.NEUTRAL);
+            flyingSoundPlayed = tickCount;
+        }
+
+        if (this.moving)
             this.setPos(this.position().add(this.getDeltaMovement()));
+
+        if (this.currentState == BoomerangState.ATTACKING) {
+            handleAttackState();
+        } else if (this.currentState == BoomerangState.RETURNING) {
+            handleReturningState();
+        } else if (this.currentState == BoomerangState.RETURNED) {
+            handleReturnedState();
+        }
+
+        if (this.currentState != this.nextState) {
+            Deforestry.LOGGER.debug("current state: " + currentState + ", next state: " + nextState + ", Owner:\n" + getOwner());
+            this.currentState = this.nextState;
+        }
+
+    }
+
+    protected void handleAttackState() {
 
         Vec3 velocity = this.getDeltaMovement();
         Vec3 pos = this.position();
         Vec3 nextPos = pos.add(velocity);
 
-        if(this.currentState == BoomerangState.ATTACKING) {
+        HitResult hitResult = this.level().clip(new ClipContext(pos, nextPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+        if (hitResult.getType() != HitResult.Type.MISS) {
+            nextPos = hitResult.getLocation();
+        }
 
-            HitResult hitResult = this.level().clip(new ClipContext(pos, nextPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-            if (hitResult.getType() != HitResult.Type.MISS) {
-                nextPos = hitResult.getLocation();
+        EntityHitResult entityHitResult = findHitEntity(this.position(), nextPos);
+        if (entityHitResult != null) {
+            hitResult = entityHitResult;
+        }
+
+        if (hitResult != null && hitResult.getType() == HitResult.Type.ENTITY) {
+            Entity hitEntity = ((EntityHitResult) hitResult).getEntity();
+            Entity ownerEntity = this.getOwner();
+            if (hitEntity instanceof Player && ownerEntity instanceof Player && !((Player) ownerEntity).canHarmPlayer((Player) hitEntity) || this.ownedBy(hitEntity)) {
+                hitResult = null;
             }
+        }
 
-            EntityHitResult entityHitResult = findHitEntity(this.position(), nextPos);
-            if (entityHitResult != null) {
-                hitResult = entityHitResult;
-            }
-
-            if (hitResult != null && hitResult.getType() == HitResult.Type.ENTITY) {
-                Entity hitEntity = ((EntityHitResult) hitResult).getEntity();
-                Entity ownerEntity = this.getOwner();
-                if (hitEntity instanceof Player && ownerEntity instanceof Player && !((Player) ownerEntity).canHarmPlayer((Player) hitEntity) || this.ownedBy(hitEntity)) {
-                    hitResult = null;
-                }
-            }
-
-            if (hitResult != null && hitResult.getType() != HitResult.Type.MISS) {
-                if (!EventHooks.onProjectileImpact(this, hitResult)) {
-                    boomerangItemStack.hurtAndBreak(1, (LivingEntity) getOwner(), (e) -> {
-                        if (e!= null) {
-                            e.broadcastBreakEvent(EquipmentSlot.MAINHAND);
-                        }
-                    });
-                    this.onHit(hitResult);
-                    this.hasImpulse = true;
-                    this.prepareToHome();
-                    this.nextState = BoomerangState.RETURNING;
-                }
-            }
-
-            if(pos.distanceTo(getOwner().position()) > Config.boomerangRange) {
+        if (hitResult != null && hitResult.getType() != HitResult.Type.MISS) {
+            if (!EventHooks.onProjectileImpact(this, hitResult)) {
+                boomerangItemStack.hurtAndBreak(1, (LivingEntity) getOwner(), (e) -> {
+                    if (e!= null) {
+                        e.broadcastBreakEvent(EquipmentSlot.MAINHAND);
+                    }
+                });
+                this.onHit(hitResult);
+                this.hasImpulse = true;
                 this.prepareToHome();
                 this.nextState = BoomerangState.RETURNING;
             }
+        }
 
-        } else if(this.currentState == BoomerangState.RETURNING) {
+        if(pos.distanceTo(getOwner().position()) > Config.boomerangRange) {
+            this.prepareToHome();
+            this.nextState = BoomerangState.RETURNING;
+        }
+    }
 
-            Entity ownerEntity = getOwner();
+    protected void handleReturningState() {
 
-            if (ownerEntity == null) {
-                this.nextState = BoomerangState.RETURNED;
-            } else {
+        Vec3 velocity = this.getDeltaMovement();
+        Vec3 pos = this.position();
+        Vec3 nextPos = pos.add(velocity);
 
-                int timeDelta = this.tickCount - this.tickStamp;
-                this.positionErrorIntegral.add(pos.x * timeDelta, pos.y * timeDelta, pos.z * timeDelta);
+        Entity ownerEntity = getOwner();
 
-                Vec3 positionDelta = ownerEntity.getPosition(1.0f).subtract(pos);
+        if (ownerEntity == null) {
+            this.nextState = BoomerangState.RETURNED;
+        } else {
 
-                Vec3 acceleration = pos.scale(-P).add(positionErrorIntegral.scale(-I)).add(positionDelta.scale(-D));
-//                this.setDeltaMovement(acceleration);
+            Vec3 targetPos = ownerEntity.getPosition(1.0f);
+            if(ownerEntity instanceof Player) {
+                targetPos = targetPos.add(0.0f, 1.2f, 0.0f);
+            }
 
-                EntityHitResult entityHitResult = findHitEntity(this.position(), nextPos);
-                if (entityHitResult != null) {
-                    Entity hitEntity = entityHitResult.getEntity();
-                    if(this.ownedBy(hitEntity)) {
-                        this.moving = false;
-                        this.nextState = BoomerangState.RETURNED;
-                    }
-                }
+            Vec3 positionDelta = pos.subtract(targetPos);
 
-                if(timeDelta > Config.boomerangLifespan) {
+            int timeDelta = this.tickCount - this.tickStamp;
+            this.positionErrorIntegral.add(positionDelta.scale(timeDelta)./*hacky hacky hack hack hack*/multiply(positionErrorIntegral));
+
+            Vec3 acceleration = positionDelta.scale(-P).add(positionErrorIntegral.scale(-I)).add(velocity.scale(-D));
+            this.setDeltaMovement(this.getDeltaMovement().add(acceleration));
+
+            EntityHitResult entityHitResult = findHitEntity(this.position(), nextPos);
+            if (entityHitResult != null) {
+                Entity hitEntity = entityHitResult.getEntity();
+                if(this.ownedBy(hitEntity)) {
                     this.moving = false;
                     this.nextState = BoomerangState.RETURNED;
                 }
             }
 
-        } else if(this.currentState == BoomerangState.RETURNED) {
+            if(timeDelta > Config.boomerangLifespan) {
+                this.moving = false;
+                this.nextState = BoomerangState.RETURNED;
+            }
+        }
+    }
 
-            if (getOwner() instanceof Player player) {
-                if (!player.addItem(boomerangItemStack)) {
-                    level().addFreshEntity(new ItemEntity(this.level(), player.getX(), player.getY(), player.getZ(), boomerangItemStack));
+    protected void handleReturnedState() {
+        if (getOwner() instanceof Player player) {
+            if (!player.addItem(boomerangItemStack)) {
+                level().addFreshEntity(new ItemEntity(this.level(), player.getX(), player.getY(), player.getZ(), boomerangItemStack));
+                if(level().isClientSide) {
+                    level().playSound(player, player, DeforestrySounds.BOOMERANG_RETURN.get(), SoundSource.PLAYERS, 1.0f, 1.0f);
                 }
             }
-
-            this.discard();
         }
 
-        if(this.currentState != this.nextState) {
-            Deforestry.LOGGER.debug("current state: " + currentState + ", next state: " + nextState + ", Owner:\n" + getOwner());
-            this.currentState = this.nextState;
-        }
+        this.discard();
     }
 
     public void prepareToHome() {
@@ -192,6 +227,30 @@ public class BoomerangEntity extends Projectile {
     }
     protected boolean canHitEntity(Entity entity) {
         return entity.canBeHitByProjectile();
+    }
+
+    @Override
+    public void onHitBlock(BlockHitResult hitResult) {
+        super.onHitBlock(hitResult);
+        Vec3 soundLocation = hitResult.getLocation();
+        level().playSound(null, soundLocation.x, soundLocation.y, soundLocation.z, DeforestrySounds.BOOMERANG_CLANG.get(), SoundSource.NEUTRAL);
+    }
+
+    public void onHitEntity(EntityHitResult hitResult) {
+        super.onHitEntity(hitResult);
+
+        Entity hitEntity = hitResult.getEntity();
+        Entity owner = this.getOwner();
+        DamageSource damageSource;
+        if (owner == null) {
+            damageSource = this.damageSources().thrown(this, this);
+        } else {
+            damageSource = this.damageSources().thrown(this, owner);
+            if (owner instanceof LivingEntity) {
+                ((LivingEntity)owner).setLastHurtMob(hitEntity);
+            }
+        }
+        hitEntity.hurt(damageSource, (float) BASE_DAMAGE);
     }
 
 

@@ -1,4 +1,28 @@
 {
+  "boomerang_clang": {
+    "sounds": [
+      "deforestry:boomerang_clang"
+    ],
+    "subtitle": "Boomerang impacts block"
+  },
+  "boomerang_flying": {
+    "sounds": [
+      "deforestry:boomerang_flying"
+    ],
+    "subtitle": "Boomerang flying"
+  },
+  "boomerang_return": {
+    "sounds": [
+      "deforestry:boomerang_return"
+    ],
+    "subtitle": "Boomerang returns"
+  },
+  "boomerang_throw": {
+    "sounds": [
+      "deforestry:boomerang_throw"
+    ],
+    "subtitle": "Boomerang thrown"
+  },
   "chainsaw_sound": {
     "sounds": [
       "deforestry:chainsaw_sound"

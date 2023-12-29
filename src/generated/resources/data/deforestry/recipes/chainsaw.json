@@ -16,9 +16,9 @@
     }
   },
   "pattern": [
-    "  b",
-    " gg",
-    "iir"
+    "i b",
+    " ig",
+    " gr"
   ],
   "result": {
     "item": "deforestry:chainsaw"

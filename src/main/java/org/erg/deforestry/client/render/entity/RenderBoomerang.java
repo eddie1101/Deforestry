@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 public class RenderBoomerang extends EntityRenderer<BoomerangEntity> {
 
     private static final ResourceLocation BOOMERANG_TEXTURE_LOCATION = DeforestryUtil.getDeforestryRLFrom("textures/entity/boomerang/boomerang.png");
-    private static final int FRAMES_PER_ROTATION = 20;
+    private static final int FRAMES_PER_ROTATION = 10;
     private final BoomerangModel model;
 
     public RenderBoomerang(EntityRendererProvider.Context ctx) {

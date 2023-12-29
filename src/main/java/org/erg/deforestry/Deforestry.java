@@ -18,6 +18,22 @@ import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import org.slf4j.Logger;
 
 
+//TODO: (we don't have a kanban board so comments will do)
+// ----------
+// BOOMERANG:
+// Make throw force based on duration item is used
+// Improve collision detection with player
+// Make sounds *better*
+// Make bounces appropriate for the side of the block that they hit
+// Add collisions during returning state (block and entity?)
+// Tune PID?
+// ----------
+// Chopper Util:
+// Make chops remove leaves in range of the appropriate type for the wood being chopped
+// ----------
+// Boomerang Chopper:
+// Everything is in place you could just do a prototype now if you wanted
+
 @Mod(Deforestry.MODID)
 public class Deforestry
 {

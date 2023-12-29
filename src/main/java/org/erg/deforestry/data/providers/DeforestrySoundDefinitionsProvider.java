@@ -7,8 +7,7 @@ import net.neoforged.neoforge.common.data.SoundDefinitionsProvider;
 import org.erg.deforestry.common.registries.DeforestrySounds;
 
 import static org.erg.deforestry.Deforestry.MODID;
-import static org.erg.deforestry.common.registries.DeforestrySounds.CHAINSAW_SOUND;
-import static org.erg.deforestry.common.registries.DeforestrySounds.REMOTE_CHOPPER_SOUND;
+import static org.erg.deforestry.common.registries.DeforestrySounds.*;
 
 public class DeforestrySoundDefinitionsProvider extends SoundDefinitionsProvider {
 
@@ -26,6 +25,26 @@ public class DeforestrySoundDefinitionsProvider extends SoundDefinitionsProvider
         add(CHAINSAW_SOUND.get(), definition()
                 .subtitle("Chainsaw revving")
                 .with(sound(CHAINSAW_SOUND.getId()))
+        );
+
+        add(BOOMERANG_FLYING.get(), definition()
+                .subtitle("Boomerang flying")
+                .with(sound(BOOMERANG_FLYING.getId()))
+        );
+
+        add(BOOMERANG_THROW.get(), definition()
+                .subtitle("Boomerang thrown")
+                .with(sound(BOOMERANG_THROW.getId()))
+        );
+
+        add(BOOMERANG_CLANG.get(), definition()
+                .subtitle("Boomerang impacts block")
+                .with(sound(BOOMERANG_CLANG.getId()))
+        );
+
+        add(BOOMERANG_RETURN.get(), definition()
+                .subtitle("Boomerang returns")
+                .with(sound(BOOMERANG_RETURN.getId()))
         );
     }
 

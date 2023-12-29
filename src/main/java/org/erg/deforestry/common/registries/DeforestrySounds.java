@@ -14,4 +14,9 @@ public class DeforestrySounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> REMOTE_CHOPPER_SOUND = SOUNDS.register("remote_chopper_sound", (rloc) -> SoundEvent.createFixedRangeEvent(rloc, 5f));
     public static final DeferredHolder<SoundEvent, SoundEvent> CHAINSAW_SOUND = SOUNDS.register("chainsaw_sound", (rloc) -> SoundEvent.createFixedRangeEvent(rloc, 10f));
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> BOOMERANG_THROW = SOUNDS.register("boomerang_throw", (rloc) -> SoundEvent.createFixedRangeEvent(rloc, 4f));
+    public static final DeferredHolder<SoundEvent, SoundEvent> BOOMERANG_FLYING = SOUNDS.register("boomerang_flying", (rloc) -> SoundEvent.createFixedRangeEvent(rloc, 6f));
+    public static final DeferredHolder<SoundEvent, SoundEvent> BOOMERANG_RETURN = SOUNDS.register("boomerang_return", (rloc) -> SoundEvent.createFixedRangeEvent(rloc, 3f));
+    public static final DeferredHolder<SoundEvent, SoundEvent> BOOMERANG_CLANG = SOUNDS.register("boomerang_clang", (rloc) -> SoundEvent.createFixedRangeEvent(rloc, 16f));
+
 }
