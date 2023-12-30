@@ -18,21 +18,7 @@ import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import org.slf4j.Logger;
 
 
-//TODO: (we don't have a kanban board so comments will do)
-// ----------
-// BOOMERANG:
-// Don't reverse velocity when boomerang goes out of range, just let PID take over
-// Maybe add a return radius based on launched power?
-// Make bounces appropriate for the side of the block that they hit
-// Add collisions during returning state (block and entity?)
-// Make boomerang pitch and roll with angular velocity
-// Make boomerang damage depend on relative velocity of hit entity
-// ----------
-// Chopper Util:
-// Make chops remove leaves in range of the appropriate type for the wood being chopped
-// ----------
-// Boomerang Chopper:
-// Everything is in place you could just do a prototype now if you wanted
+//Progress tracker: https://github.com/users/eddie1101/projects/1/views/1
 
 @Mod(Deforestry.MODID)
 public class Deforestry
