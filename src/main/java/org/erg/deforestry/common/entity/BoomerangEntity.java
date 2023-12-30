@@ -1,8 +1,8 @@
 package org.erg.deforestry.common.entity;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
@@ -13,16 +13,13 @@ import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.*;
-import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.event.EventHooks;
+import net.neoforged.neoforge.fluids.FluidType;
 import org.erg.deforestry.Config;
-import org.erg.deforestry.Deforestry;
 import org.erg.deforestry.common.registries.DeforestryItems;
 import org.erg.deforestry.common.registries.DeforestrySounds;
-
-import java.util.Iterator;
 
 
 public class BoomerangEntity extends Projectile {
@@ -81,6 +78,11 @@ public class BoomerangEntity extends Projectile {
     public void tick() {
         super.tick();
 
+        if(this.isInFluidType(Fluids.LAVA.defaultFluidState())) {
+            level().playSound(null, this.position().x, this.position().y, this.position().z, SoundEvents.FIRE_EXTINGUISH, SoundSource.NEUTRAL, 1.0f, 1.0f);
+            this.discard();
+        }
+
         //This makes me hate myself even more
         if(tickCount - flyingSoundPlayed > 24) {
             level().playSound(null, this.position().x, this.position().y, this.position().z, DeforestrySounds.BOOMERANG_FLYING.get(), SoundSource.NEUTRAL);
@@ -99,13 +101,16 @@ public class BoomerangEntity extends Projectile {
         }
 
         if (this.currentState != this.nextState) {
-            Deforestry.LOGGER.debug("current state: " + currentState + ", next state: " + nextState + ", Owner:\n" + getOwner());
             this.currentState = this.nextState;
         }
+
+
 
     }
 
     protected void handleAttackState() {
+
+        boolean shouldReturn = false;
 
         Vec3 velocity = this.getDeltaMovement();
         Vec3 pos = this.position();
@@ -138,12 +143,11 @@ public class BoomerangEntity extends Projectile {
                 });
                 this.onHit(hitResult);
                 this.hasImpulse = true;
-                this.prepareToHome();
-                this.nextState = BoomerangState.RETURNING;
+                shouldReturn = true;
             }
         }
 
-        if(pos.distanceTo(getOwner().position()) > this.launchRadius) {
+        if(shouldReturn || pos.distanceTo(getOwner().position()) > this.launchRadius) {
             this.prepareToHome();
             this.nextState = BoomerangState.RETURNING;
         }
@@ -171,7 +175,7 @@ public class BoomerangEntity extends Projectile {
 
             Vec3 targetPos = ownerEntity.getPosition(1.0f);
             if(ownerEntity instanceof Player) {
-                targetPos = targetPos.add(0.0f, 1.2f, 0.0f);
+                targetPos = targetPos.add(0.0f, 1.0f, 0.0f);
             }
 
             Vec3 positionDelta = pos.subtract(targetPos);
@@ -191,12 +195,7 @@ public class BoomerangEntity extends Projectile {
 
             this.setDeltaMovement(this.getDeltaMovement().add(acceleration.scale(easing)));
 
-            if(this.getBoundingBox().intersects(ownerEntity.getBoundingBox().inflate(0.25d))) {
-                this.moving = false;
-                this.nextState = BoomerangState.RETURNED;
-            }
-
-            if(timeAlive > Config.boomerangLifespan) {
+            if(timeAlive > Config.boomerangLifespan || this.getBoundingBox().intersects(ownerEntity.getBoundingBox().inflate(0.2d))) {
                 this.moving = false;
                 this.nextState = BoomerangState.RETURNED;
             }
@@ -234,7 +233,6 @@ public class BoomerangEntity extends Projectile {
         super.onHitBlock(hitResult);
         Vec3 soundLocation = hitResult.getLocation();
         level().playSound(null, soundLocation.x, soundLocation.y, soundLocation.z, DeforestrySounds.BOOMERANG_CLANG.get(), SoundSource.NEUTRAL);
-        Deforestry.LOGGER.debug("" + hitResult.getDirection());
         if(!level().isClientSide())
             this.bounce(hitResult.getDirection().getAxis());
     }
@@ -257,13 +255,12 @@ public class BoomerangEntity extends Projectile {
     }
 
     public void bounce(Direction.Axis surfaceHitAxis) {
-        Deforestry.LOGGER.debug(surfaceHitAxis.getName());
         if(surfaceHitAxis.getName().equals("y")) {
-            this.setDeltaMovement(this.getDeltaMovement().multiply(1.0d, -1.0d, 1.0d));
+            this.setDeltaMovement(this.getDeltaMovement().multiply(1.0d, -1.0d, 1.0d).scale(0.8d));
         } else if(surfaceHitAxis.getName().equals("x")) {
-            this.setDeltaMovement(this.getDeltaMovement().multiply(-1.0d, 1.0d, 1.0d));
+            this.setDeltaMovement(this.getDeltaMovement().multiply(-1.0d, 1.0d, 1.0d).scale(0.8d));
         } else if(surfaceHitAxis.getName().equals("z")) {
-            this.setDeltaMovement(this.getDeltaMovement().multiply(1.0d, 1.0d, -1.0d));
+            this.setDeltaMovement(this.getDeltaMovement().multiply(1.0d, 1.0d, -1.0d).scale(0.8d));
         }
     }
 
