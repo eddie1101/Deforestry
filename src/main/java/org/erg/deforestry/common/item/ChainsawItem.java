@@ -73,11 +73,14 @@ public class ChainsawItem extends Item {
 
             for(int i = 0; i < logsToChop; i++) {
                 level.destroyBlock(logs.get(i), false);
-                if(player != null) {
-                    ItemStack choppedLog = new ItemStack(logType);
-                    if(!player.addItem(choppedLog)) {
-                        level.addFreshEntity(new ItemEntity(level, player.getX(), player.getY(), player.getZ(), choppedLog));
-                    }
+
+                for(BlockPos leaf: DeforestryUtil.getConnectedLeavesAroundLog(logs.get(i), level)) {
+                    level.destroyBlock(leaf, true, player);
+                }
+
+                ItemStack choppedLog = new ItemStack(logType);
+                if(!player.addItem(choppedLog)) {
+                    level.addFreshEntity(new ItemEntity(level, player.getX(), player.getY(), player.getZ(), choppedLog));
                 }
 
                 stack.hurtAndBreak(1, player, (e) -> {

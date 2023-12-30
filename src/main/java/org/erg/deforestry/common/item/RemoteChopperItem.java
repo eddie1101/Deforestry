@@ -50,7 +50,10 @@ public class RemoteChopperItem extends Item {
                     int numLogs = logs.size();
                     int logsToChop = Math.min(Math.min(stack.getMaxDamage() - stack.getDamageValue(), numLogs), Config.maxRemoteChop);
                     for (int i = 0; i < logsToChop; i++) {
-                        level.destroyBlock(logs.get(i), true);
+                        level.destroyBlock(logs.get(i), true, player);
+                        for(BlockPos leaf: DeforestryUtil.getConnectedLeavesAroundLog(logs.get(i), level)) {
+                            level.destroyBlock(leaf, true, player);
+                        }
                     }
 
                     player.getCooldowns().addCooldown(this, Config.remoteChopperCooldown);

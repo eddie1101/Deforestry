@@ -1,6 +1,8 @@
 package org.erg.deforestry.common.util;
 
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import org.erg.deforestry.Config;
 import org.erg.deforestry.Deforestry;
 import net.minecraft.core.BlockPos;
@@ -28,35 +30,11 @@ public class DeforestryUtil {
         Stack<BlockPos> toSearch = new Stack<>();
         toSearch.add(origin);
 
-        while(!toSearch.isEmpty()) {
-
-            if(logs.size() >= Config.maxGlobalChop) {
-                break;
-            }
+        while(!toSearch.isEmpty() && logs.size() <= Config.maxGlobalChop) {
 
             BlockPos center = toSearch.pop();
 
-            StringBuilder sb = new StringBuilder();
-            sb.append("FIND LOGS!\n");
-            sb.append("Logs: ");
-            for(BlockPos pos: logs) {
-                sb.append(pos).append(", ");
-            }
-            sb.append("\n").append("toSearch: ");
-            for(BlockPos pos: toSearch) {
-                sb.append(pos).append(", ");
-            }
-            sb.append("\n").append("center: ").append(center).append("\n");
-
-            AABB aabb = AABB.encapsulatingFullBlocks(center.below().west().south(), center.above().east().north());
-            List<BlockPos> candidates = getSurroundingBlocks(aabb, center);
-
-            sb.append("Candidates: ");
-            for(BlockPos pos: candidates) {
-                sb.append(pos).append(", ");
-            }
-            sb.append("\n");
-
+            List<BlockPos> candidates = getSurroundingBlocks(center);
 
             for(BlockPos pos: candidates) {
                 if(level.getBlockState(pos).is(logType)) {
@@ -66,7 +44,6 @@ public class DeforestryUtil {
 
             logs.add(center);
 
-            Deforestry.LOGGER.debug(sb.toString());
         }
 
         return new ArrayList<>(logs);
@@ -87,6 +64,52 @@ public class DeforestryUtil {
             }
         }
         return candidates;
+    }
+
+    public static List<BlockPos> getSurroundingBlocks(BlockPos center) {
+        AABB aabb = AABB.encapsulatingFullBlocks(center.below().west().south(), center.above().east().north());
+        return getSurroundingBlocks(aabb, center);
+    }
+
+    public static List<BlockPos> getAdjacentBlocks(BlockPos center) {
+        List<BlockPos> blocks = new ArrayList<>();
+        blocks.add(center);
+        blocks.add(center.above());
+        blocks.add(center.below());
+        blocks.add(center.east());
+        blocks.add(center.west());
+        blocks.add(center.north());
+        blocks.add(center.south());
+        return blocks;
+    }
+
+    @NotNull
+    public static List<BlockPos> getConnectedLeavesAroundLog(BlockPos log, Level level) {
+        Set<BlockPos> leaves = new HashSet<>();
+        Stack<BlockPos> toSearch = new Stack<>();
+        toSearch.add(log);
+
+        AABB range = AABB.encapsulatingFullBlocks(log.below(4).west(4).south(4), log.above(4).east(4).north(4));
+
+        while(!toSearch.isEmpty()) {
+
+            BlockPos center = toSearch.pop();
+
+            for(BlockPos pos: getAdjacentBlocks(center)) {
+                if(level.getBlockState(pos).is(BlockTags.LEAVES)) {
+                    if(!toSearch.contains(pos) &&
+                            !leaves.contains(pos) &&
+                            range.contains(pos.getX(), pos.getY(), pos.getZ())) {
+                        toSearch.add(pos);
+                    }
+                }
+            }
+
+            if(level.getBlockState(center).is(BlockTags.LEAVES))
+                leaves.add(center);
+        }
+        return new ArrayList<>(leaves);
+
     }
 
 }
