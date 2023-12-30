@@ -36,7 +36,10 @@ public class FellingAxeItem extends AxeItem {
                 int logsToChop = Math.min(Math.min(heldItem.getMaxDamage() - heldItem.getDamageValue(), numLogs), Config.maxFellingAxeChop);
 
                 for(int i = 0; i < logsToChop; i++) {
-                    level.destroyBlock(logs.get(i), true);
+                    level.destroyBlock(logs.get(i), true, breaker);
+                    for(BlockPos leaf: DeforestryUtil.getConnectedLeavesAroundLog(logs.get(i), level)) {
+                        level.destroyBlock(leaf, true, breaker);
+                    }
                     heldItem.hurtAndBreak(1, breaker, (e) -> e.broadcastBreakEvent(EquipmentSlot.MAINHAND));
                 }
             }
