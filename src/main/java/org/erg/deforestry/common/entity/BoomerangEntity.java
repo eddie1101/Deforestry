@@ -11,12 +11,12 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.event.EventHooks;
-import net.neoforged.neoforge.fluids.FluidType;
 import org.erg.deforestry.Config;
 import org.erg.deforestry.common.registries.DeforestryItems;
 import org.erg.deforestry.common.registries.DeforestrySounds;
@@ -24,15 +24,18 @@ import org.erg.deforestry.common.registries.DeforestrySounds;
 
 public class BoomerangEntity extends Projectile {
 
-    private static final int BASE_DAMAGE = 6;
+    public static final int MAX_DAMAGE_DIFFERENTIAL = 5;
     private static final double P = 0.0072d, I = 0.0012d, D = 0.0650d;
+
     private Vec3 positionErrorIntegral = new Vec3(0.0d, 0.0d, 0.0d);
 
     private boolean moving = true;
     private int flyingSoundPlayed = 0;
     private int tickStamp = 0;
     private float launchRadius = 0;
+    private int entitiesPierced = 0;
 
+    private final int minDamage;
     private final ItemStack boomerangItemStack;
 
     BoomerangState currentState;
@@ -50,6 +53,9 @@ public class BoomerangEntity extends Projectile {
         }
 
         this.launchRadius = Math.max(Config.boomerangDefaultRange / 2f, Config.boomerangDefaultRange * power);
+
+        int sharpnessLevels = boomerangItemStack.getEnchantmentLevel(Enchantments.SHARPNESS);
+        this.minDamage = 1 + sharpnessLevels;
 
         currentState = BoomerangState.ATTACKING;
         nextState = BoomerangState.ATTACKING;
@@ -103,9 +109,6 @@ public class BoomerangEntity extends Projectile {
         if (this.currentState != this.nextState) {
             this.currentState = this.nextState;
         }
-
-
-
     }
 
     protected void handleAttackState() {
@@ -136,11 +139,6 @@ public class BoomerangEntity extends Projectile {
 
         if (hitResult != null && hitResult.getType() != HitResult.Type.MISS) {
             if (!EventHooks.onProjectileImpact(this, hitResult)) {
-                boomerangItemStack.hurtAndBreak(1, (LivingEntity) getOwner(), (e) -> {
-                    if (e!= null) {
-                        e.broadcastBreakEvent(EquipmentSlot.MAINHAND);
-                    }
-                });
                 this.onHit(hitResult);
                 this.hasImpulse = true;
                 shouldReturn = true;
@@ -209,6 +207,9 @@ public class BoomerangEntity extends Projectile {
             }
         }
 
+        this.entitiesPierced = 0;
+        this.moving = false;
+
         this.discard();
     }
 
@@ -240,6 +241,15 @@ public class BoomerangEntity extends Projectile {
     public void onHitEntity(EntityHitResult hitResult) {
         super.onHitEntity(hitResult);
 
+        int unbreaking = boomerangItemStack.getEnchantmentLevel(Enchantments.UNBREAKING);
+        double chance = 1d / (unbreaking + 1);
+        boomerangItemStack.hurtAndBreak(level().getRandom().nextDouble() <= chance ? 1 : 0, (LivingEntity) getOwner(), (e) -> {
+            if (e!= null) {
+                e.broadcastBreakEvent(EquipmentSlot.MAINHAND);
+            }
+        });
+
+
         Entity hitEntity = hitResult.getEntity();
         Entity owner = this.getOwner();
         DamageSource damageSource;
@@ -251,7 +261,28 @@ public class BoomerangEntity extends Projectile {
                 ((LivingEntity)owner).setLastHurtMob(hitEntity);
             }
         }
-        hitEntity.hurt(damageSource, (float) BASE_DAMAGE);
+
+        double velocity = Math.min(this.getDeltaMovement().length(), 1.0d);
+        int damage = minDamage + (int) Math.round(velocity * MAX_DAMAGE_DIFFERENTIAL);
+
+        hitEntity.hurt(damageSource, (float) damage);
+
+        int knockback = boomerangItemStack.getEnchantmentLevel(Enchantments.KNOCKBACK);
+        if(knockback > 0) {
+            Vec3 knockbackVector = this.getDeltaMovement().scale(knockback);
+            hitEntity.push(knockbackVector.x, knockbackVector.y, knockbackVector.z);
+        }
+
+        int piercing = boomerangItemStack.getEnchantmentLevel(Enchantments.PIERCING);
+        if(++entitiesPierced >= piercing) {
+//            this.bounce(); entity bouncing is not supported yet
+        }
+
+        int fire = boomerangItemStack.getEnchantmentLevel(Enchantments.FIRE_ASPECT);
+        if(fire > 0) {
+            hitEntity.setSecondsOnFire(5 * fire);
+        }
+
     }
 
     public void bounce(Direction.Axis surfaceHitAxis) {
