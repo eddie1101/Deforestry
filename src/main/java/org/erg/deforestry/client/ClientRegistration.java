@@ -6,7 +6,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import org.erg.deforestry.client.model.BoomerangModel;
-import org.erg.deforestry.client.render.entity.RenderBoomerang;
+import org.erg.deforestry.client.render.entity.BoomerangRenderer;
 import org.erg.deforestry.common.entity.BoomerangEntity;
 import org.erg.deforestry.common.registries.DeforestryEntityTypes;
 
@@ -17,7 +17,7 @@ public class ClientRegistration {
 
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerEntityRenderer( (EntityType<BoomerangEntity>) DeforestryEntityTypes.BOOMERANG_ENTITY.get(), RenderBoomerang::new);
+        event.registerEntityRenderer( (EntityType<BoomerangEntity>) DeforestryEntityTypes.BOOMERANG_ENTITY.get(), BoomerangRenderer::new);
     }
 
     @SubscribeEvent

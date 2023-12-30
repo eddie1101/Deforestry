@@ -11,12 +11,6 @@
     ],
     "subtitle": "Boomerang flying"
   },
-  "boomerang_return": {
-    "sounds": [
-      "deforestry:boomerang_return"
-    ],
-    "subtitle": "Boomerang returns"
-  },
   "boomerang_throw": {
     "sounds": [
       "deforestry:boomerang_throw"
