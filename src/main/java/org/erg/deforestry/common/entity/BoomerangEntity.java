@@ -134,6 +134,7 @@ public class BoomerangEntity extends Projectile {
                 this.onHit(hitResult);
                 this.hasImpulse = true;
                 this.prepareToHome();
+                this.setDeltaMovement(this.getDeltaMovement().scale(-1.0f));
                 this.nextState = BoomerangState.RETURNING;
             }
         }
@@ -203,7 +204,6 @@ public class BoomerangEntity extends Projectile {
     }
 
     public void prepareToHome() {
-        this.setDeltaMovement(this.getDeltaMovement().scale(-1.0f));
         tickStamp = tickCount;
         this.positionErrorIntegral = new Vec3(0.0d, 0.0d, 0.0d);
     }
