@@ -2,7 +2,6 @@ package org.erg.deforestry.common.entity;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -32,13 +31,14 @@ public class BoomerangEntity extends Projectile {
     private boolean moving = true;
     private int flyingSoundPlayed = 0;
     private int tickStamp = 0;
+    private float launchRadius = 0;
 
     private final ItemStack boomerangItemStack;
 
     BoomerangState currentState;
     BoomerangState nextState;
 
-    public BoomerangEntity(EntityType<? extends BoomerangEntity> type, Level level, LivingEntity owner, ItemStack boomerang, double x, double y, double z) {
+    public BoomerangEntity(EntityType<? extends BoomerangEntity> type, Level level, LivingEntity owner, ItemStack boomerang, double x, double y, double z, float power) {
         super(type, level);
         this.setOwner(owner);
         this.setPos(x, y, z);
@@ -49,17 +49,19 @@ public class BoomerangEntity extends Projectile {
             boomerangItemStack = boomerang;
         }
 
+        this.launchRadius = Math.max(Config.boomerangDefaultRange / 2f, Config.boomerangDefaultRange * power);
+
         currentState = BoomerangState.ATTACKING;
         nextState = BoomerangState.ATTACKING;
 
     }
 
-    public BoomerangEntity(EntityType<? extends BoomerangEntity> type, Level level, LivingEntity owner, ItemStack boomerang) {
-        this(type, level, owner, boomerang, owner.getX(), owner.getEyeY() - 0.5f, owner.getZ());
+    public BoomerangEntity(EntityType<? extends BoomerangEntity> type, Level level, LivingEntity owner, ItemStack boomerang, float power) {
+        this(type, level, owner, boomerang, owner.getX(), owner.getEyeY() - 0.5f, owner.getZ(), power);
     }
 
     public BoomerangEntity(EntityType<? extends BoomerangEntity> type, Level level, double x, double y, double z) {
-        this(type, level, null, null, x, y, z);
+        this(type, level, null, null, x, y, z, 1.0f);
     }
 
     public BoomerangEntity(EntityType<? extends BoomerangEntity> entityType, Level level) {
@@ -139,7 +141,7 @@ public class BoomerangEntity extends Projectile {
             }
         }
 
-        if(pos.distanceTo(getOwner().position()) > Config.boomerangRange) {
+        if(pos.distanceTo(getOwner().position()) > this.launchRadius) {
             this.prepareToHome();
             this.nextState = BoomerangState.RETURNING;
         }
@@ -157,6 +159,8 @@ public class BoomerangEntity extends Projectile {
             this.nextState = BoomerangState.RETURNED;
         } else {
 
+            int timeAlive = tickCount - tickStamp;
+
             Vec3 targetPos = ownerEntity.getPosition(1.0f);
             if(ownerEntity instanceof Player) {
                 targetPos = targetPos.add(0.0f, 1.2f, 0.0f);
@@ -168,7 +172,16 @@ public class BoomerangEntity extends Projectile {
             positionErrorIntegral = positionErrorIntegral.add(positionDelta.scale(timeDelta));
 
             Vec3 acceleration = positionDelta.scale(-P).add(positionErrorIntegral.scale(-I)).add(velocity.scale(-D));
-            this.setDeltaMovement(this.getDeltaMovement().add(acceleration));
+
+            //Prevents "whiplash" when the PID controller takes over, which can look very glitchy
+            double easing;
+            if(timeAlive < 5) {
+                easing = timeAlive / 5d;
+            } else {
+                easing = 1d;
+            }
+
+            this.setDeltaMovement(this.getDeltaMovement().add(acceleration.scale(easing)));
 
             EntityHitResult entityHitResult = findHitEntity(this.position(), nextPos);
             if (entityHitResult != null) {
@@ -183,8 +196,6 @@ public class BoomerangEntity extends Projectile {
                 this.moving = false;
                 this.nextState = BoomerangState.RETURNED;
             }
-
-            int timeAlive = tickCount - tickStamp;
 
             if(timeAlive > Config.boomerangLifespan) {
                 this.moving = false;

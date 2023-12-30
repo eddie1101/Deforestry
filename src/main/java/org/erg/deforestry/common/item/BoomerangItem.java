@@ -43,7 +43,8 @@ public class BoomerangItem extends Item {
                 (EntityType<? extends BoomerangEntity>) DeforestryEntityTypes.BOOMERANG_ENTITY.get(),
                 level,
                 entity,
-                stack
+                stack,
+                power
         );
         if(entity instanceof Player player) {
             player.getInventory().removeItem(stack);
