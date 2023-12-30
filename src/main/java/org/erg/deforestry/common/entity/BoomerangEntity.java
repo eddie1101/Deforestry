@@ -119,23 +119,7 @@ public class BoomerangEntity extends Projectile {
         Vec3 pos = this.position();
         Vec3 nextPos = pos.add(velocity);
 
-        HitResult hitResult = this.level().clip(new ClipContext(pos, nextPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-        if (hitResult.getType() != HitResult.Type.MISS) {
-            nextPos = hitResult.getLocation();
-        }
-
-        EntityHitResult entityHitResult = findHitEntity(this.position(), nextPos);
-        if (entityHitResult != null) {
-            hitResult = entityHitResult;
-        }
-
-        if (hitResult != null && hitResult.getType() == HitResult.Type.ENTITY) {
-            Entity hitEntity = ((EntityHitResult) hitResult).getEntity();
-            Entity ownerEntity = this.getOwner();
-            if (hitEntity instanceof Player && ownerEntity instanceof Player && !((Player) ownerEntity).canHarmPlayer((Player) hitEntity) || this.ownedBy(hitEntity)) {
-                hitResult = null;
-            }
-        }
+        HitResult hitResult = this.getImminentCollision(pos, nextPos);
 
         if (hitResult != null && hitResult.getType() != HitResult.Type.MISS) {
             if (!EventHooks.onProjectileImpact(this, hitResult)) {
@@ -165,11 +149,12 @@ public class BoomerangEntity extends Projectile {
 
             int timeAlive = tickCount - tickStamp;
 
-            HitResult hitResult = this.level().clip(new ClipContext(pos, nextPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-            if(hitResult != null && hitResult.getType() == HitResult.Type.BLOCK) {
-                this.onHit(hitResult);
+            HitResult hitResult = getImminentCollision(pos, nextPos);
+            if (hitResult != null && hitResult.getType() != HitResult.Type.MISS) {
+                if (!EventHooks.onProjectileImpact(this, hitResult)) {
+                    this.onHit(hitResult);
+                }
             }
-
 
             Vec3 targetPos = ownerEntity.getPosition(1.0f);
             if(ownerEntity instanceof Player) {
@@ -222,6 +207,27 @@ public class BoomerangEntity extends Projectile {
         return ProjectileUtil.getEntityHitResult(this.level(), this, pos, vel, this.getBoundingBox().expandTowards(vel).inflate(1.0), this::canHitEntity);
     }
 
+    public HitResult getImminentCollision(Vec3 pos, Vec3 nextPos) {
+        HitResult hitResult = this.level().clip(new ClipContext(pos, nextPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+        if (hitResult.getType() != HitResult.Type.MISS) {
+            nextPos = hitResult.getLocation();
+        }
+
+        EntityHitResult entityHitResult = findHitEntity(this.position(), nextPos);
+        if (entityHitResult != null) {
+            hitResult = entityHitResult;
+        }
+
+        if (hitResult != null && hitResult.getType() == HitResult.Type.ENTITY) {
+            Entity hitEntity = ((EntityHitResult) hitResult).getEntity();
+            Entity ownerEntity = this.getOwner();
+            if (hitEntity instanceof Player && ownerEntity instanceof Player && !((Player) ownerEntity).canHarmPlayer((Player) hitEntity) || this.ownedBy(hitEntity)) {
+                hitResult = null;
+            }
+        }
+        return hitResult;
+    }
+
     public int getTicksForRotation() {
         return tickCount;
     }
@@ -235,7 +241,7 @@ public class BoomerangEntity extends Projectile {
         Vec3 soundLocation = hitResult.getLocation();
         level().playSound(null, soundLocation.x, soundLocation.y, soundLocation.z, DeforestrySounds.BOOMERANG_CLANG.get(), SoundSource.NEUTRAL);
         if(!level().isClientSide())
-            this.bounce(hitResult.getDirection().getAxis());
+            this.bounceOffBlock(hitResult.getDirection().getAxis());
     }
 
     public void onHitEntity(EntityHitResult hitResult) {
@@ -248,7 +254,6 @@ public class BoomerangEntity extends Projectile {
                 e.broadcastBreakEvent(EquipmentSlot.MAINHAND);
             }
         });
-
 
         Entity hitEntity = hitResult.getEntity();
         Entity owner = this.getOwner();
@@ -274,8 +279,8 @@ public class BoomerangEntity extends Projectile {
         }
 
         int piercing = boomerangItemStack.getEnchantmentLevel(Enchantments.PIERCING);
-        if(++entitiesPierced >= piercing) {
-//            this.bounce(); entity bouncing is not supported yet
+        if(++entitiesPierced >= piercing && !level().isClientSide()) {
+            this.bounceOffEntity(hitEntity);
         }
 
         int fire = boomerangItemStack.getEnchantmentLevel(Enchantments.FIRE_ASPECT);
@@ -285,12 +290,36 @@ public class BoomerangEntity extends Projectile {
 
     }
 
-    public void bounce(Direction.Axis surfaceHitAxis) {
+    public void bounceOffBlock(Direction.Axis surfaceHitAxis) {
         if(surfaceHitAxis.getName().equals("y")) {
             this.setDeltaMovement(this.getDeltaMovement().multiply(1.0d, -1.0d, 1.0d).scale(0.8d));
         } else if(surfaceHitAxis.getName().equals("x")) {
             this.setDeltaMovement(this.getDeltaMovement().multiply(-1.0d, 1.0d, 1.0d).scale(0.8d));
         } else if(surfaceHitAxis.getName().equals("z")) {
+            this.setDeltaMovement(this.getDeltaMovement().multiply(1.0d, 1.0d, -1.0d).scale(0.8d));
+        }
+    }
+
+    //Placeholder, barely works at all (use trig damnit)
+    public void bounceOffEntity(Entity entity) {
+        AABB boundingBox = entity.getBoundingBox();
+        Vec3 entityCenter = boundingBox.getCenter();
+        Vec3 pos = this.position();
+        if(!boundingBox.intersects(this.getBoundingBox())) {
+            pos = pos.add(this.getDeltaMovement());
+        }
+
+        double dx = Math.abs(entityCenter.x - pos.x);
+        double dy = Math.abs(entityCenter.y - pos.y);
+        double dz = Math.abs(entityCenter.z - pos.z);
+
+        double min = Math.min(Math.min(dx, dy), dz);
+
+        if(min == dx) {
+            this.setDeltaMovement(this.getDeltaMovement().multiply(-1.0d, 1.0d, 1.0d).scale(0.8d));
+        } else if(min == dy) {
+            this.setDeltaMovement(this.getDeltaMovement().multiply(1.0d, -1.0d, 1.0d).scale(0.8d));
+        } else if(min == dz) {
             this.setDeltaMovement(this.getDeltaMovement().multiply(1.0d, 1.0d, -1.0d).scale(0.8d));
         }
     }
