@@ -50,7 +50,7 @@ public class BoomerangItem extends Item {
             player.getInventory().removeItem(stack);
         }
 
-        boomerang.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), 0.0f, power * 2.0f, 0.5f + power / 2.0f);
+        boomerang.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), 0.0f, power, 0.5f + power / 2.0f);
         level.addFreshEntity(boomerang);
         level.playSound((Player) null, entity, DeforestrySounds.BOOMERANG_THROW.get(), SoundSource.PLAYERS, 0.5f + power, 1.0f + power / 2.0f);
     }

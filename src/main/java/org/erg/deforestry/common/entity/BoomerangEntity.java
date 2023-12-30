@@ -1,5 +1,7 @@
 package org.erg.deforestry.common.entity;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
@@ -11,15 +13,16 @@ import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.*;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.event.EventHooks;
 import org.erg.deforestry.Config;
 import org.erg.deforestry.Deforestry;
 import org.erg.deforestry.common.registries.DeforestryItems;
 import org.erg.deforestry.common.registries.DeforestrySounds;
+
+import java.util.Iterator;
 
 
 public class BoomerangEntity extends Projectile {
@@ -136,7 +139,6 @@ public class BoomerangEntity extends Projectile {
                 this.onHit(hitResult);
                 this.hasImpulse = true;
                 this.prepareToHome();
-                this.setDeltaMovement(this.getDeltaMovement().scale(-1.0f));
                 this.nextState = BoomerangState.RETURNING;
             }
         }
@@ -161,6 +163,12 @@ public class BoomerangEntity extends Projectile {
 
             int timeAlive = tickCount - tickStamp;
 
+            HitResult hitResult = this.level().clip(new ClipContext(pos, nextPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+            if(hitResult != null && hitResult.getType() == HitResult.Type.BLOCK) {
+                this.onHit(hitResult);
+            }
+
+
             Vec3 targetPos = ownerEntity.getPosition(1.0f);
             if(ownerEntity instanceof Player) {
                 targetPos = targetPos.add(0.0f, 1.2f, 0.0f);
@@ -182,15 +190,6 @@ public class BoomerangEntity extends Projectile {
             }
 
             this.setDeltaMovement(this.getDeltaMovement().add(acceleration.scale(easing)));
-
-            EntityHitResult entityHitResult = findHitEntity(this.position(), nextPos);
-            if (entityHitResult != null) {
-                Entity hitEntity = entityHitResult.getEntity();
-                if(this.ownedBy(hitEntity)) {
-                    this.moving = false;
-                    this.nextState = BoomerangState.RETURNED;
-                }
-            }
 
             if(this.getBoundingBox().intersects(ownerEntity.getBoundingBox().inflate(0.25d))) {
                 this.moving = false;
@@ -235,6 +234,9 @@ public class BoomerangEntity extends Projectile {
         super.onHitBlock(hitResult);
         Vec3 soundLocation = hitResult.getLocation();
         level().playSound(null, soundLocation.x, soundLocation.y, soundLocation.z, DeforestrySounds.BOOMERANG_CLANG.get(), SoundSource.NEUTRAL);
+        Deforestry.LOGGER.debug("" + hitResult.getDirection());
+        if(!level().isClientSide())
+            this.bounce(hitResult.getDirection().getAxis());
     }
 
     public void onHitEntity(EntityHitResult hitResult) {
@@ -252,6 +254,17 @@ public class BoomerangEntity extends Projectile {
             }
         }
         hitEntity.hurt(damageSource, (float) BASE_DAMAGE);
+    }
+
+    public void bounce(Direction.Axis surfaceHitAxis) {
+        Deforestry.LOGGER.debug(surfaceHitAxis.getName());
+        if(surfaceHitAxis.getName().equals("y")) {
+            this.setDeltaMovement(this.getDeltaMovement().multiply(1.0d, -1.0d, 1.0d));
+        } else if(surfaceHitAxis.getName().equals("x")) {
+            this.setDeltaMovement(this.getDeltaMovement().multiply(-1.0d, 1.0d, 1.0d));
+        } else if(surfaceHitAxis.getName().equals("z")) {
+            this.setDeltaMovement(this.getDeltaMovement().multiply(1.0d, 1.0d, -1.0d));
+        }
     }
 
 
