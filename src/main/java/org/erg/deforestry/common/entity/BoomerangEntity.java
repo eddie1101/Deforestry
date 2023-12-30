@@ -1,7 +1,9 @@
 package org.erg.deforestry.common.entity;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
@@ -14,6 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.event.EventHooks;
@@ -83,6 +86,20 @@ public class BoomerangEntity extends Projectile {
     @Override
     public void tick() {
         super.tick();
+
+        Vec3 nextPos = position().add(getDeltaMovement());
+        HitResult hitResult = this.level().clip(new ClipContext(position(), position().add(getDeltaMovement()), ClipContext.Block.COLLIDER, ClipContext.Fluid.WATER, this));
+        if(hitResult != null && hitResult.getType() == HitResult.Type.BLOCK) {
+            BlockPos pos = ((BlockHitResult) hitResult).getBlockPos();
+            Level level = level();
+            if(level.getBlockState(pos).is(Blocks.WATER) && !this.isInWater()) {
+                this.doWaterSplashEffect();
+                this.wasTouchingWater = true;
+            }
+        } else if(level().getBlockState(new BlockPos((int) nextPos.x, (int) nextPos.y, (int) nextPos.z)).is(Blocks.AIR) && this.isInWater()) {
+            this.doWaterSplashEffect();
+            this.wasTouchingWater = false;
+        }
 
         if(this.isInFluidType(Fluids.LAVA.defaultFluidState())) {
             level().playSound(null, this.position().x, this.position().y, this.position().z, SoundEvents.FIRE_EXTINGUISH, SoundSource.NEUTRAL, 1.0f, 1.0f);
@@ -176,7 +193,9 @@ public class BoomerangEntity extends Projectile {
                 easing = 1d;
             }
 
-            this.setDeltaMovement(this.getDeltaMovement().add(acceleration.scale(easing)));
+            Vec3 newVelocity = this.getDeltaMovement().add(acceleration.scale(easing));
+            double waterSpeedFactor = this.wasTouchingWater ? 0.75d : 1d;
+            this.setDeltaMovement(newVelocity.scale(waterSpeedFactor));
 
             if(timeAlive > Config.boomerangLifespan || this.getBoundingBox().intersects(ownerEntity.getBoundingBox().inflate(0.2d))) {
                 this.moving = false;

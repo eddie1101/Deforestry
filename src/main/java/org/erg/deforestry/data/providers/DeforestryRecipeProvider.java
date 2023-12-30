@@ -41,9 +41,9 @@ public class DeforestryRecipeProvider extends RecipeProvider {
                 .save(output);
 
         ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, DeforestryItems.BOOMERANG)
-                .pattern("sp ")
-                .pattern("  p")
-                .pattern("sp ")
+                .pattern(" ps")
+                .pattern("p  ")
+                .pattern(" ps")
                 .define('s', ItemTags.WOODEN_SLABS)
                 .define('p', ItemTags.PLANKS)
                 .unlockedBy(getSimpleRecipeName(Items.OAK_LOG), has(ItemTags.WOODEN_SLABS))

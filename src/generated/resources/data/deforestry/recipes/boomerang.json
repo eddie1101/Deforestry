@@ -10,9 +10,9 @@
     }
   },
   "pattern": [
-    "sp ",
-    "  p",
-    "sp "
+    " ps",
+    "p  ",
+    " ps"
   ],
   "result": {
     "item": "deforestry:boomerang"
