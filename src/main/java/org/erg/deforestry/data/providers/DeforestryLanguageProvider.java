@@ -20,6 +20,7 @@ public class DeforestryLanguageProvider extends LanguageProvider {
         add(DeforestryItems.BOOMERANG.get(), "Boomerang");
         add(DeforestryItems.BOOMERANG_CHOPPER.get(), "Boomerang Chopper");
         add(DeforestryEntityTypes.BOOMERANG_ENTITY.get(), "Boomerang");
+        add(DeforestryEntityTypes.BOOMERANG_CHOPPER_ENTITY.get(), "Boomerang Chopper");
         add("tab.deforestry.deforestry_tab", "Deforestry");
     }
 

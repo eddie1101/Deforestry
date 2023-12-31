@@ -21,14 +21,17 @@ public class BoomerangItem extends Item {
         super(props.durability(200));
     }
 
+    @Override
     public UseAnim getUseAnimation(ItemStack stack) {
         return UseAnim.BOW;
     }
 
+    @Override
     public int getUseDuration(ItemStack stack) {
         return 72000;
     }
 
+    @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int usedDuration) {
         float durationDelta = (float) this.getUseDuration(stack) - usedDuration;
         float power = durationDelta / 20.0f;
