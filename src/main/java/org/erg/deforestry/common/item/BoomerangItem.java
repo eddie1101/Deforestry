@@ -29,9 +29,9 @@ public class BoomerangItem extends Item {
         return 72000;
     }
 
-    public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int usedDuration) {
-        float durationDelta = (float) this.getUseDuration(stack) - usedDuration;
-        float power = durationDelta / 20.0f;
+    public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int ticksRemaining) {
+        float duration = (float) this.getUseDuration(stack) - ticksRemaining;
+        float power = duration / 20.0f;
         power = (power * power + power * 2.0f) / 3.0f;
         if (power > 1.0f) {
             power = 1.0f;

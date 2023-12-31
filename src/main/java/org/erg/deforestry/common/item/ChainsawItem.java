@@ -1,29 +1,35 @@
 package org.erg.deforestry.common.item;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import org.erg.deforestry.Config;
-import org.erg.deforestry.Deforestry;
 import org.erg.deforestry.common.registries.DeforestrySounds;
 import org.erg.deforestry.common.util.DeforestryUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
-
-import static org.erg.deforestry.common.util.DeforestryUtil.getLogsInTree;
 
 public class ChainsawItem extends Item {
 
@@ -43,59 +49,81 @@ public class ChainsawItem extends Item {
 
     @Override
     public InteractionResult useOn(UseOnContext ctx) {
+        return super.useOn(ctx);
+    }
 
-        Level level = ctx.getLevel();
-        BlockPos origin = ctx.getClickedPos();
-        BlockState state = level.getBlockState(origin);
+    @Override
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        player.startUsingItem(hand);
+        level.playSound((Player) null, player.getX(), player.getY(), player.getZ(), DeforestrySounds.CHAINSAW_SOUND.get(), SoundSource.PLAYERS, 0.7f, 0.8f);
+        return InteractionResultHolder.pass(player.getItemInHand(hand));
+    }
 
-        if(!level.isClientSide() && state.is(BlockTags.LOGS)) {
+    @Override
+    public void onUseTick(Level level, LivingEntity user, ItemStack stack, int ticksRemaining) {
 
-            ItemStack stack = ctx.getItemInHand();
-            Player player = ctx.getPlayer();
+        int duration = getUseDuration(stack) - ticksRemaining;
+        int interval = Config.chainsawInterval;
+        boolean skip = duration % (interval + 1) == 0;
 
-            Block logType = level.getBlockState(origin).getBlock();
+        if(user instanceof Player player && duration > 20 && !skip) {
 
-            List<BlockPos> logs = DeforestryUtil.getLogsInTree(logType, origin, level);
-
-            Collections.sort(logs);
-            Collections.reverse(logs);
-
-            int numLogs = logs.size();
-            int logsToChop = Math.min(
-                    Math.min(
-                            stack.getMaxDamage() - stack.getDamageValue(),
-                            numLogs
-                    ),
-                    Config.chainsawSpeed
-            );
-
-            level.playSound((Player) null, player.getX(), player.getY(), player.getZ(), DeforestrySounds.CHAINSAW_SOUND.get(), SoundSource.PLAYERS, 0.7f, 0.8f);
-
-            for(int i = 0; i < logsToChop; i++) {
-                level.destroyBlock(logs.get(i), false);
-
-                for(BlockPos leaf: DeforestryUtil.getConnectedLeavesAroundLog(logs.get(i), level)) {
-                    level.destroyBlock(leaf, true, player);
-                }
-
-                ItemStack choppedLog = new ItemStack(logType);
-                if(!player.addItem(choppedLog)) {
-                    level.addFreshEntity(new ItemEntity(level, player.getX(), player.getY(), player.getZ(), choppedLog));
-                }
-
-                stack.hurtAndBreak(1, player, (e) -> {
-                    if (e!= null) {
-                        e.broadcastBreakEvent(EquipmentSlot.MAINHAND);
-                    }
-                });
+            HitResult hitResult = user.pick(player.getBlockReach(), 1.0f, false);
+            if(hitResult == null || hitResult.getType() == HitResult.Type.MISS) {
+                return;
             }
 
-            player.getCooldowns().addCooldown(this, Config.chainsawCooldown);
+            BlockHitResult blockHitResult = (BlockHitResult) hitResult;
+            BlockPos origin = blockHitResult.getBlockPos();
+            BlockState state = level.getBlockState(origin);
 
-            return InteractionResult.SUCCESS;
+            if(!level.isClientSide() && state.is(BlockTags.LOGS)) {
+
+                Block logType = level.getBlockState(origin).getBlock();
+
+                List<BlockPos> logs = DeforestryUtil.getLogsInTree(logType, origin, level);
+
+                Collections.sort(logs);
+                Collections.reverse(logs);
+
+                int numLogs = logs.size();
+                int logsToChop = Math.min(
+                        Math.min(
+                                stack.getMaxDamage() - stack.getDamageValue(),
+                                numLogs
+                        ),
+                        Config.chainsawSpeed
+                );
+
+                LootParams.Builder lootBuilder = new LootParams.Builder((ServerLevel) level)
+                        .withParameter(LootContextParams.ORIGIN, origin.getCenter())
+                        .withParameter(LootContextParams.TOOL, new ItemStack(Items.IRON_AXE));
+
+                for(int i = 0; i < logsToChop; i++) {
+                    level.destroyBlock(logs.get(i), false, player);
+                    ItemStack choppedLog = new ItemStack(logType);
+                    if(!player.addItem(choppedLog)) {
+                        level.addFreshEntity(new ItemEntity(level, player.getX(), player.getY(), player.getZ(), choppedLog));
+                    }
+
+                    for(BlockPos leaf: DeforestryUtil.getConnectedLeavesAroundLog(logs.get(i), level)) {
+                        BlockState blockState = level.getBlockState(leaf);
+                        for(ItemStack item: blockState.getDrops(lootBuilder)) {
+                            if(!player.addItem(item)) {
+                                level.addFreshEntity(new ItemEntity(level, player.getX(), player.getY(), player.getZ(), item));
+                            }
+                        }
+                        level.destroyBlock(leaf, false, player);
+                    }
+
+                    stack.hurtAndBreak(1, player, (e) -> {
+                        if (e != null) {
+                            e.broadcastBreakEvent(EquipmentSlot.MAINHAND);
+                        }
+                    });
+                }
+            }
         }
-
-        return InteractionResult.PASS;
     }
 
 }
