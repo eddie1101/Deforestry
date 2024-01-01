@@ -21,6 +21,7 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.event.EventHooks;
 import org.erg.deforestry.Config;
+import org.erg.deforestry.Deforestry;
 import org.erg.deforestry.common.registries.DeforestryItems;
 import org.erg.deforestry.common.registries.DeforestrySounds;
 
@@ -39,16 +40,18 @@ public class BoomerangEntity extends Projectile {
     private int entitiesPierced = 0;
 
     private final int minDamage;
+    private final int itemSlot;
     private final ItemStack boomerangItemStack;
 
     BoomerangState currentState;
     BoomerangState nextState;
 
-    public BoomerangEntity(EntityType<? extends BoomerangEntity> type, Level level, LivingEntity owner, ItemStack boomerang, double x, double y, double z, float power) {
+    public BoomerangEntity(EntityType<? extends BoomerangEntity> type, Level level, LivingEntity owner, ItemStack boomerang, int itemSlot, double x, double y, double z, float power) {
         super(type, level);
         this.setOwner(owner);
         this.setPos(x, y, z);
 
+        this.itemSlot = itemSlot;
         if(boomerang == null) {
             boomerangItemStack = new ItemStack(DeforestryItems.BOOMERANG.get());
         } else {
@@ -65,12 +68,12 @@ public class BoomerangEntity extends Projectile {
 
     }
 
-    public BoomerangEntity(EntityType<? extends BoomerangEntity> type, Level level, LivingEntity owner, ItemStack boomerang, float power) {
-        this(type, level, owner, boomerang, owner.getX(), owner.getEyeY() - 0.5f, owner.getZ(), power);
+    public BoomerangEntity(EntityType<? extends BoomerangEntity> type, Level level, LivingEntity owner, ItemStack boomerang, int itemSlot, float power) {
+        this(type, level, owner, boomerang, itemSlot, owner.getX(), owner.getEyeY() - 0.5f, owner.getZ(), power);
     }
 
     public BoomerangEntity(EntityType<? extends BoomerangEntity> type, Level level, double x, double y, double z) {
-        this(type, level, null, null, x, y, z, 1.0f);
+        this(type, level, null, null, -1, x, y, z, 1.0f);
     }
 
     public BoomerangEntity(EntityType<? extends BoomerangEntity> entityType, Level level) {
@@ -205,8 +208,10 @@ public class BoomerangEntity extends Projectile {
     }
 
     protected void handleReturnedState() {
-        if (getOwner() instanceof Player player) {
-            if (!player.addItem(boomerangItemStack)) {
+        if (getOwner() instanceof Player player && !level().isClientSide()) {
+            Deforestry.LOGGER.debug("" + player.getInventory().getItem(itemSlot) + " " + player.getInventory().getItem(itemSlot).isEmpty());
+            int slot = player.getInventory().getItem(itemSlot).isEmpty() ? itemSlot : -1;
+            if (!player.getInventory().add(slot, this.boomerangItemStack)) {
                 level().addFreshEntity(new ItemEntity(this.level(), player.getX(), player.getY(), player.getZ(), boomerangItemStack));
             }
         }
