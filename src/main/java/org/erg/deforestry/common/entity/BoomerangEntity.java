@@ -356,9 +356,12 @@ public class BoomerangEntity extends Projectile {
 
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
+        Deforestry.LOGGER.debug("Saving Boomerang (owner): " + this.ownerUUID);
         super.addAdditionalSaveData(tag);
         tag.putInt("slot", this.itemSlot);
         tag.putInt("stamp", tickStamp);
+        tag.putInt("state", this.currentState.ordinal());
+        tag.putInt("nextState", this.nextState.ordinal());
         double x = positionErrorIntegral.x, y = positionErrorIntegral.y, z = positionErrorIntegral.z;
         double dx = getDeltaMovement().x, dy = getDeltaMovement().y, dz = getDeltaMovement().z;
         tag.putDouble("dxi", x);
@@ -371,8 +374,12 @@ public class BoomerangEntity extends Projectile {
 
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        Deforestry.LOGGER.debug("Reading Boomerang (owner): " + this.ownerUUID);
         this.itemSlot = tag.getInt("slot");
         this.tickStamp = tag.getInt("stamp");
+        this.currentState = BoomerangState.values()[tag.getInt("state")];
+        this.nextState = BoomerangState.values()[tag.getInt("nextState")];
         double dxi = tag.getDouble("dxi");
         double dyi = tag.getDouble("dyi");
         double dzi = tag.getDouble("dzi");
