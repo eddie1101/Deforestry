@@ -40,7 +40,7 @@ public class BoomerangEntity extends Projectile {
     private int entitiesPierced = 0;
 
     private final int minDamage;
-    private final int itemSlot;
+    private int itemSlot;
     private final ItemStack boomerangItemStack;
 
     BoomerangState currentState;
@@ -110,7 +110,7 @@ public class BoomerangEntity extends Projectile {
         }
 
         //This makes me hate myself even more
-        if(tickCount - flyingSoundPlayed > 24) {
+        if(tickCount - flyingSoundPlayed > 40) {
             level().playSound(null, this.position().x, this.position().y, this.position().z, DeforestrySounds.BOOMERANG_FLYING.get(), SoundSource.NEUTRAL);
             flyingSoundPlayed = tickCount;
         }
@@ -355,13 +355,32 @@ public class BoomerangEntity extends Projectile {
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag compoundTag) {
-        super.readAdditionalSaveData(compoundTag);
+    protected void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putInt("slot", this.itemSlot);
+        tag.putInt("stamp", tickStamp);
+        double x = positionErrorIntegral.x, y = positionErrorIntegral.y, z = positionErrorIntegral.z;
+        double dx = getDeltaMovement().x, dy = getDeltaMovement().y, dz = getDeltaMovement().z;
+        tag.putDouble("dxi", x);
+        tag.putDouble("dyi", y);
+        tag.putDouble("dzi", z);
+        tag.putDouble("dx", dx);
+        tag.putDouble("dy", dy);
+        tag.putDouble("dz", dz);
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag compoundTag) {
-        super.addAdditionalSaveData(compoundTag);
+    protected void readAdditionalSaveData(CompoundTag tag) {
+        this.itemSlot = tag.getInt("slot");
+        this.tickStamp = tag.getInt("stamp");
+        double dxi = tag.getDouble("dxi");
+        double dyi = tag.getDouble("dyi");
+        double dzi = tag.getDouble("dzi");
+        double dx = tag.getDouble("dx");
+        double dy = tag.getDouble("dy");
+        double dz = tag.getDouble("dz");
+        this.positionErrorIntegral = new Vec3(dxi, dyi, dzi);
+        this.setDeltaMovement(dx, dy, dz);
     }
 
     protected enum BoomerangState {
