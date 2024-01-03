@@ -56,6 +56,13 @@ public class Config
             .comment("The time in ticks (20 ticks/second) that the boomerang can attempt to seek its owner for.\n[0-1200]")
             .defineInRange("boomerangLifespan", 200, 0, 1200);
 
+    private static final ModConfigSpec.IntValue BOOMERANG_OWNER_TIMEOUT = BUILDER
+            .comment("""
+                     The time in ticks (20 ticks/second) that the boomerang will wait for it's owner to log in on world load.
+                     If on a server, consider setting this value higher.
+                     [0-1728000]""")
+            .defineInRange("boomerangOwnerTimeout", 20, 0, 1728000);
+
     static final ModConfigSpec SPEC = BUILDER.build();
 
     public static int maxGlobalChop;
@@ -68,6 +75,7 @@ public class Config
     public static int remoteChopperCooldown;
     public static int boomerangDefaultRange;
     public static int boomerangLifespan;
+    public static int boomerangOwnerTimeout;
 
     private static boolean validateItemName(final Object obj)
     {
@@ -90,6 +98,7 @@ public class Config
 
         boomerangDefaultRange = BOOMERANG_DEFAULT_RANGE.get();
         boomerangLifespan = BOOMERANG_LIFESPAN.get();
+        boomerangOwnerTimeout = BOOMERANG_OWNER_TIMEOUT.get();
 
     }
 }
