@@ -1,6 +1,10 @@
 package org.erg.deforestry.common.item;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleGroup;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
@@ -39,7 +43,7 @@ public class ChainsawItem extends Item {
 
     @Override
     public @NotNull UseAnim getUseAnimation(ItemStack stack) {
-        return UseAnim.BOW;
+        return UseAnim.CROSSBOW;
     }
 
     @Override
@@ -75,6 +79,18 @@ public class ChainsawItem extends Item {
             if(!level.isClientSide() && state.is(BlockTags.LOGS)) {
 
                 Block logType = level.getBlockState(origin).getBlock();
+
+                ((ServerLevel) level).sendParticles(
+                        new BlockParticleOption(ParticleTypes.BLOCK, state),
+                        hitResult.getLocation().x(),
+                        hitResult.getLocation().y(),
+                        hitResult.getLocation().z(),
+                        level.getRandom().nextIntBetweenInclusive(3, 10),
+                        0.0d,
+                        0.0d,
+                        0.0d,
+                        1.0d
+                );
 
                 List<BlockPos> logs = DeforestryUtil.getLogsInTree(logType, origin, level);
 
@@ -118,6 +134,7 @@ public class ChainsawItem extends Item {
                     });
                 }
             }
+
         }
     }
 
