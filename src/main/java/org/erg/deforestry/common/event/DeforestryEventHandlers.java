@@ -1,5 +1,9 @@
 package org.erg.deforestry.common.event;
 
+import net.minecraft.client.telemetry.events.WorldLoadEvent;
+import net.minecraft.client.telemetry.events.WorldUnloadEvent;
+import net.neoforged.neoforge.event.level.ChunkDataEvent;
+import net.neoforged.neoforge.event.level.ChunkEvent;
 import org.erg.deforestry.Deforestry;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
