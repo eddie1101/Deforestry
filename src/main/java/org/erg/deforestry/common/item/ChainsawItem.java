@@ -48,15 +48,10 @@ public class ChainsawItem extends Item {
     }
 
     @Override
-    public InteractionResult useOn(UseOnContext ctx) {
-        return super.useOn(ctx);
-    }
-
-    @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         player.startUsingItem(hand);
         level.playSound((Player) null, player.getX(), player.getY(), player.getZ(), DeforestrySounds.CHAINSAW_SOUND.get(), SoundSource.PLAYERS, 0.7f, 0.8f);
-        return InteractionResultHolder.pass(player.getItemInHand(hand));
+        return InteractionResultHolder.consume(player.getItemInHand(hand));
     }
 
     @Override
