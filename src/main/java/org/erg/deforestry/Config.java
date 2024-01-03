@@ -17,13 +17,14 @@ public class Config
                     Hey! These default values define the intended gameplay experience
                     of this mod. If you change them, you could seriously mess up and
                     break some of the items in this mod (from both a balance and a
-                    mechanical perspective). Don't let that stop your fun though!
-                    
+                    mechanical perspective). You've been warned (But don't let that
+                    stop your fun!).
                     """);
 
 
     private static final ModConfigSpec.IntValue MAX_GLOBAL_CHOP = BUILDER
             .comment("""
+                    
                     The maximum number of logs that can be chopped by any item.
                     Warning: This config value, more than any of the others below,
                     could drastically affect performance at high numbers.

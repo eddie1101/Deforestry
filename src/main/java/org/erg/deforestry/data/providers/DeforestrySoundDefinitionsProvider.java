@@ -27,6 +27,11 @@ public class DeforestrySoundDefinitionsProvider extends SoundDefinitionsProvider
                 .with(sound(CHAINSAW_SOUND.getId()))
         );
 
+        add(CHAINSAW_STARTING.get(), definition()
+                .subtitle("Chainsaw starting")
+                .with(sound(CHAINSAW_STARTING.getId()))
+        );
+
         add(BOOMERANG_FLYING.get(), definition()
                 .subtitle("Boomerang flying")
                 .with(sound(BOOMERANG_FLYING.getId()))

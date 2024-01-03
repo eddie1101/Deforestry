@@ -43,7 +43,7 @@ public class ChainsawItem extends Item {
 
     @Override
     public @NotNull UseAnim getUseAnimation(ItemStack stack) {
-        return UseAnim.CROSSBOW;
+        return UseAnim.BOW;
     }
 
     @Override
@@ -54,7 +54,7 @@ public class ChainsawItem extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         player.startUsingItem(hand);
-        level.playSound((Player) null, player.getX(), player.getY(), player.getZ(), DeforestrySounds.CHAINSAW_SOUND.get(), SoundSource.PLAYERS, 0.7f, 0.8f);
+        level.playSound(null, player, DeforestrySounds.CHAINSAW_STARTING.get(), SoundSource.PLAYERS, 1.0f, 1.0f);
         return InteractionResultHolder.consume(player.getItemInHand(hand));
     }
 
@@ -64,6 +64,10 @@ public class ChainsawItem extends Item {
         int duration = getUseDuration(stack) - ticksRemaining;
         int interval = Config.chainsawInterval;
         boolean skip = duration % (interval + 1) == 0;
+
+        //Will I go to hell for using ticks to measure time?
+        if(duration >= 30 && duration % 30 == 0)
+            level.playSound(null, user, DeforestrySounds.CHAINSAW_SOUND.get(), SoundSource.PLAYERS, 0.7f, 0.8f);
 
         if(user instanceof Player player && duration > 20 && !skip) {
 
