@@ -36,13 +36,15 @@ public class BoomerangEntity extends Projectile {
     private boolean moving = true;
     private int flyingSoundPlayed = 0;
     private int tickStamp = 0;
+    private int tickTimeout = 0;
     private float launchRadius = 0;
     private int entitiesPierced = 0;
 
     private final int minDamage;
-    private final int itemSlot;
+    private int itemSlot;
     private final ItemStack boomerangItemStack;
 
+    BoomerangState lastState;
     BoomerangState currentState;
     BoomerangState nextState;
 
@@ -63,6 +65,7 @@ public class BoomerangEntity extends Projectile {
         int sharpnessLevels = boomerangItemStack.getEnchantmentLevel(Enchantments.SHARPNESS);
         this.minDamage = 1 + sharpnessLevels;
 
+        lastState = BoomerangState.TIMEOUT;
         currentState = BoomerangState.ATTACKING;
         nextState = BoomerangState.ATTACKING;
 
@@ -110,7 +113,7 @@ public class BoomerangEntity extends Projectile {
         }
 
         //This makes me hate myself even more
-        if(tickCount - flyingSoundPlayed > 24) {
+        if(tickCount - flyingSoundPlayed > 40) {
             level().playSound(null, this.position().x, this.position().y, this.position().z, DeforestrySounds.BOOMERANG_FLYING.get(), SoundSource.NEUTRAL);
             flyingSoundPlayed = tickCount;
         }
@@ -124,48 +127,57 @@ public class BoomerangEntity extends Projectile {
             handleReturningState();
         } else if (this.currentState == BoomerangState.RETURNED) {
             handleReturnedState();
+        } else if (this.currentState == BoomerangState.TIMEOUT) {
+            handleTimeoutState();
         }
 
         if (this.currentState != this.nextState) {
+            this.lastState = this.currentState;
             this.currentState = this.nextState;
         }
     }
 
     protected void handleAttackState() {
 
-        boolean shouldReturn = false;
+        Entity ownerEntity = getOwner();
 
-        Vec3 velocity = this.getDeltaMovement();
-        Vec3 pos = this.position();
-        Vec3 nextPos = pos.add(velocity);
+        if (ownerEntity == null) {
+            nextState = BoomerangState.TIMEOUT;
+        } else {
+            boolean shouldReturn = false;
 
-        HitResult hitResult = this.getImminentCollision(pos, nextPos);
+            Vec3 velocity = this.getDeltaMovement();
+            Vec3 pos = this.position();
+            Vec3 nextPos = pos.add(velocity);
 
-        if (hitResult != null && hitResult.getType() != HitResult.Type.MISS) {
-            if (!EventHooks.onProjectileImpact(this, hitResult)) {
-                this.onHit(hitResult);
-                this.hasImpulse = true;
-                shouldReturn = true;
+            HitResult hitResult = this.getImminentCollision(pos, nextPos);
+
+            if (hitResult != null && hitResult.getType() != HitResult.Type.MISS) {
+                if (!EventHooks.onProjectileImpact(this, hitResult)) {
+                    this.onHit(hitResult);
+                    this.hasImpulse = true;
+                    shouldReturn = true;
+                }
             }
-        }
 
-        if(shouldReturn || pos.distanceTo(getOwner().position()) > this.launchRadius) {
-            this.prepareToHome();
-            this.nextState = BoomerangState.RETURNING;
+            if (shouldReturn || pos.distanceTo(getOwner().position()) > this.launchRadius) {
+                this.prepareToHome();
+                this.nextState = BoomerangState.RETURNING;
+            }
         }
     }
 
     protected void handleReturningState() {
 
-        Vec3 velocity = this.getDeltaMovement();
-        Vec3 pos = this.position();
-        Vec3 nextPos = pos.add(velocity);
-
         Entity ownerEntity = getOwner();
 
         if (ownerEntity == null) {
-            this.nextState = BoomerangState.RETURNED;
+            this.nextState = BoomerangState.TIMEOUT;
         } else {
+
+            Vec3 velocity = this.getDeltaMovement();
+            Vec3 pos = this.position();
+            Vec3 nextPos = pos.add(velocity);
 
             int timeAlive = tickCount - tickStamp;
 
@@ -208,7 +220,7 @@ public class BoomerangEntity extends Projectile {
     }
 
     protected void handleReturnedState() {
-        if (getOwner() instanceof Player player && !level().isClientSide()) {
+        if(getOwner() instanceof Player player && !level().isClientSide()) {
             Deforestry.LOGGER.debug("" + player.getInventory().getItem(itemSlot) + " " + player.getInventory().getItem(itemSlot).isEmpty());
             int slot = player.getInventory().getItem(itemSlot).isEmpty() ? itemSlot : -1;
             if (!player.getInventory().add(slot, this.boomerangItemStack)) {
@@ -220,6 +232,17 @@ public class BoomerangEntity extends Projectile {
         this.moving = false;
 
         this.discard();
+    }
+
+    protected void handleTimeoutState() {
+        if(getOwner() == null) {
+            if(tickTimeout++ > Config.boomerangOwnerTimeout) {
+                this.nextState = BoomerangState.RETURNED;
+            }
+        } else {
+            tickTimeout = 0;
+            this.nextState = this.lastState;
+        }
     }
 
     public void prepareToHome() {
@@ -355,19 +378,46 @@ public class BoomerangEntity extends Projectile {
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag compoundTag) {
-        super.readAdditionalSaveData(compoundTag);
+    protected void addAdditionalSaveData(CompoundTag tag) {
+        Deforestry.LOGGER.debug("Saving Boomerang (owner): " + this.ownerUUID);
+        super.addAdditionalSaveData(tag);
+        tag.putInt("slot", this.itemSlot);
+        tag.putInt("stamp", tickStamp);
+        tag.putInt("state", this.currentState.ordinal());
+        tag.putInt("nextState", this.nextState.ordinal());
+        double x = positionErrorIntegral.x, y = positionErrorIntegral.y, z = positionErrorIntegral.z;
+        double dx = getDeltaMovement().x, dy = getDeltaMovement().y, dz = getDeltaMovement().z;
+        tag.putDouble("dxi", x);
+        tag.putDouble("dyi", y);
+        tag.putDouble("dzi", z);
+        tag.putDouble("dx", dx);
+        tag.putDouble("dy", dy);
+        tag.putDouble("dz", dz);
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag compoundTag) {
-        super.addAdditionalSaveData(compoundTag);
+    protected void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        Deforestry.LOGGER.debug("Reading Boomerang (owner): " + this.ownerUUID + "\n" + "Owner entity: " + getOwner());
+        this.itemSlot = tag.getInt("slot");
+        this.tickStamp = tag.getInt("stamp");
+        this.currentState = BoomerangState.values()[tag.getInt("state")];
+        this.nextState = BoomerangState.values()[tag.getInt("nextState")];
+        double dxi = tag.getDouble("dxi");
+        double dyi = tag.getDouble("dyi");
+        double dzi = tag.getDouble("dzi");
+        double dx = tag.getDouble("dx");
+        double dy = tag.getDouble("dy");
+        double dz = tag.getDouble("dz");
+        this.positionErrorIntegral = new Vec3(dxi, dyi, dzi);
+        this.setDeltaMovement(dx, dy, dz);
     }
 
     protected enum BoomerangState {
         ATTACKING,
         RETURNING,
-        RETURNED
+        RETURNED,
+        TIMEOUT
     }
 
 }
