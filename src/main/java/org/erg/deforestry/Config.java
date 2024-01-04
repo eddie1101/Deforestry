@@ -52,7 +52,7 @@ public class Config
 
     private static final ModConfigSpec.IntValue CHAINSAW_DAMAGE = BUILDER
             .comment("\nThe amount of damage inflicted by the chainsaw to enemies.\n[0-100]")
-            .defineInRange("chainsawDamage", 4, 0, 100);
+            .defineInRange("chainsawDamage", 5, 0, 100);
 
     private static final ModConfigSpec.IntValue REMOTE_CHOPPER_RANGE = BUILDER
             .comment("\nThe range in blocks that the remote chopper will be able to chop trees.\n[1-512]")

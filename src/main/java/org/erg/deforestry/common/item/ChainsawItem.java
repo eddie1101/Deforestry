@@ -16,6 +16,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.damagesource.DamageSources;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
@@ -31,9 +32,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import org.erg.deforestry.Config;
 import org.erg.deforestry.common.registries.DeforestrySounds;
@@ -46,8 +45,6 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class ChainsawItem extends Item {
-
-    public static final int BASE_DAMAGE = Config.chainsawDamage;
 
     public ChainsawItem(Item.Properties props) {
         super(props.durability(4096));
@@ -85,6 +82,15 @@ public class ChainsawItem extends Item {
     }
 
     @Override
+    public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity entity, InteractionHand hand) {
+        if(!player.isUsingItem()) {
+            player.startUsingItem(hand);
+        }
+
+        return InteractionResult.PASS;
+    }
+
+    @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         player.startUsingItem(hand);
         level.playSound(null, player, DeforestrySounds.CHAINSAW_STARTING.get(), SoundSource.PLAYERS, 1.0f, 1.0f);
@@ -102,16 +108,22 @@ public class ChainsawItem extends Item {
         if(duration >= 30 && duration % 30 == 0)
             level.playSound(null, user, DeforestrySounds.CHAINSAW_SOUND.get(), SoundSource.PLAYERS, 0.7f, 0.8f);
 
-        if(user instanceof Player player && duration > 20 && !skip) {
+        if(user instanceof Player player && duration > 30 && !skip) {
 
-            HitResult hitResult = user.pick(player.getEntityReach(), 1.0f, false);
-            if(hitResult.getType() == HitResult.Type.ENTITY) {
-                EntityHitResult eHitResult = (EntityHitResult) hitResult;
-                eHitResult.getEntity().hurt(level.damageSources().playerAttack(player), BASE_DAMAGE);
-                return;
+            //Thank you enderman
+            for(Entity e: player.level().getEntities(player, player.getBoundingBox().inflate(player.getBlockReach()))) {
+                Vec3 playerViewAngle = player.getViewVector(1.0F).normalize();
+                Vec3 directionToEntity = new Vec3(e.getX() - player.getX(), e.getEyeY() - player.getEyeY(), e.getZ() - player.getZ());
+                double distanceToEntity = directionToEntity.length();
+                directionToEntity = directionToEntity.normalize();
+                double angleSimilarity = playerViewAngle.dot(directionToEntity);
+                if(angleSimilarity > 1.0 - 0.025 / distanceToEntity && player.hasLineOfSight(e)) {
+                    e.hurt(player.level().damageSources().playerAttack(player), Config.chainsawDamage);
+                    return;
+                }
             }
 
-            hitResult = user.pick(player.getBlockReach(), 1.0f, false);
+            HitResult hitResult = player.pick(player.getBlockReach(), 1.0f, false);
             if(hitResult == null || hitResult.getType() == HitResult.Type.MISS) {
                 return;
             }
