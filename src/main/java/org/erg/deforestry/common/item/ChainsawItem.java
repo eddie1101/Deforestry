@@ -15,6 +15,7 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.damagesource.DamageSources;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
@@ -31,6 +32,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import org.erg.deforestry.Config;
@@ -45,6 +47,8 @@ import java.util.function.Consumer;
 
 public class ChainsawItem extends Item {
 
+    public static final int BASE_DAMAGE = Config.chainsawDamage;
+
     public ChainsawItem(Item.Properties props) {
         super(props.durability(4096));
     }
@@ -53,19 +57,23 @@ public class ChainsawItem extends Item {
     public void initializeClient(Consumer<IClientItemExtensions> consumer) {
         consumer.accept(new IClientItemExtensions() {
 
-
-
-//            @Nullable
-//            @Override
-//            public HumanoidModel.ArmPose getArmPose(LivingEntity entityLiving, InteractionHand hand, ItemStack itemStack) {
-//                return IClientItemExtensions.super.getArmPose(entityLiving, hand, itemStack);
-//            }
-
             @Override
             public boolean applyForgeHandTransform(PoseStack poseStack, LocalPlayer player, HumanoidArm arm, ItemStack itemInHand, float partialTick, float equipProcess, float swingProcess) {
                 poseStack.translate(0.1d, -0.15d, -0.25d);
                 poseStack.scale(0.75f, 0.75f, 0.75f);
-                poseStack.mulPose(Axis.XN.rotation((float)Math.PI / 4f));
+                if(player.isUsingItem()) {
+                    int duration = itemInHand.getUseDuration() - player.getUseItemRemainingTicks();
+                    if (duration <= 24) {
+                        poseStack.mulPose(Axis.XN.rotation((float) Math.PI / 5.0f));
+                        double yOff = -.12d + ((duration % 12) / 100.0d);
+                        poseStack.translate(0.0d, yOff - 0.1d, 0.0d);
+                    } else {
+                        int sway = duration % 20;
+                        sway = sway < 10 ? sway : 20 - sway;
+                        poseStack.translate(0.0d, 0.0d, (sway / 40.0d) - 0.1d);
+                    }
+                }
+
                 return true;
             }
         });
@@ -96,7 +104,14 @@ public class ChainsawItem extends Item {
 
         if(user instanceof Player player && duration > 20 && !skip) {
 
-            HitResult hitResult = user.pick(player.getBlockReach(), 1.0f, false);
+            HitResult hitResult = user.pick(player.getEntityReach(), 1.0f, false);
+            if(hitResult.getType() == HitResult.Type.ENTITY) {
+                EntityHitResult eHitResult = (EntityHitResult) hitResult;
+                eHitResult.getEntity().hurt(level.damageSources().playerAttack(player), BASE_DAMAGE);
+                return;
+            }
+
+            hitResult = user.pick(player.getBlockReach(), 1.0f, false);
             if(hitResult == null || hitResult.getType() == HitResult.Type.MISS) {
                 return;
             }
@@ -106,6 +121,10 @@ public class ChainsawItem extends Item {
             BlockState state = level.getBlockState(origin);
 
             if(!level.isClientSide() && state.is(BlockTags.LOGS)) {
+
+                LootParams.Builder lootBuilder = new LootParams.Builder((ServerLevel) level)
+                        .withParameter(LootContextParams.ORIGIN, origin.getCenter())
+                        .withParameter(LootContextParams.TOOL, new ItemStack(Items.IRON_AXE));
 
                 Block logType = level.getBlockState(origin).getBlock();
 
@@ -135,10 +154,6 @@ public class ChainsawItem extends Item {
                         Config.chainsawSpeed
                 );
 
-                LootParams.Builder lootBuilder = new LootParams.Builder((ServerLevel) level)
-                        .withParameter(LootContextParams.ORIGIN, origin.getCenter())
-                        .withParameter(LootContextParams.TOOL, new ItemStack(Items.IRON_AXE));
-
                 for(int i = 0; i < logsToChop; i++) {
                     level.destroyBlock(logs.get(i), false, player);
                     ItemStack choppedLog = new ItemStack(logType);
@@ -161,6 +176,28 @@ public class ChainsawItem extends Item {
                             e.broadcastBreakEvent(EquipmentSlot.MAINHAND);
                         }
                     });
+                }
+            } else if(!level.isClientSide() &&
+                            (state.is(BlockTags.LEAVES) ||
+                            state.is(BlockTags.PLANKS) ||
+                            state.is(BlockTags.FENCE_GATES) ||
+                            state.is(BlockTags.WOODEN_BUTTONS) ||
+                            state.is(BlockTags.WOODEN_DOORS) ||
+                            state.is(BlockTags.WOODEN_FENCES) ||
+                            state.is(BlockTags.WOODEN_SLABS) ||
+                            state.is(BlockTags.WOODEN_STAIRS) ||
+                            state.is(BlockTags.WOODEN_PRESSURE_PLATES) ||
+                            state.is(BlockTags.WOODEN_TRAPDOORS))) {
+
+                LootParams.Builder lootBuilder = new LootParams.Builder((ServerLevel) level)
+                        .withParameter(LootContextParams.ORIGIN, origin.getCenter())
+                        .withParameter(LootContextParams.TOOL, new ItemStack(Items.IRON_AXE));
+
+                level.destroyBlock(origin, false);
+                for(ItemStack item: state.getDrops(lootBuilder)) {
+                    if(!player.addItem(item)) {
+                        level.addFreshEntity(new ItemEntity(level, player.getX(), player.getY(), player.getZ(), item));
+                    }
                 }
             }
 

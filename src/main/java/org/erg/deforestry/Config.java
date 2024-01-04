@@ -50,6 +50,10 @@ public class Config
             .comment("\nThe number of ticks in between each chainsaw chop.\n[0-20]")
             .defineInRange("chainsawInterval", 1, 0, 20);
 
+    private static final ModConfigSpec.IntValue CHAINSAW_DAMAGE = BUILDER
+            .comment("\nThe amount of damage inflicted by the chainsaw to enemies.\n[0-100]")
+            .defineInRange("chainsawDamage", 4, 0, 100);
+
     private static final ModConfigSpec.IntValue REMOTE_CHOPPER_RANGE = BUILDER
             .comment("\nThe range in blocks that the remote chopper will be able to chop trees.\n[1-512]")
             .defineInRange("remoteChopperRange", 256, 1, 512);
@@ -83,6 +87,7 @@ public class Config
     public static int maxBoomerangChop;
     public static int chainsawSpeed;
     public static int chainsawInterval;
+    public static int chainsawDamage;
     public static float remoteChopperRange;
     public static int remoteChopperCooldown;
     public static int boomerangDefaultRange;
@@ -99,6 +104,7 @@ public class Config
 
         chainsawSpeed = CHAINSAW_SPEED.get();
         chainsawInterval = CHAINSAW_INTERVAL.get();
+        chainsawDamage = CHAINSAW_DAMAGE.get();
 
         remoteChopperRange = (float) REMOTE_CHOPPER_RANGE.get();
         remoteChopperCooldown = REMOTE_CHOPPER_COOLDOWN.get();
