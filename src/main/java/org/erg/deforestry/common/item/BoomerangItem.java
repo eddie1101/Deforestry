@@ -20,7 +20,7 @@ import org.erg.deforestry.data.providers.DeforestryLanguageProvider;
 public class BoomerangItem extends Item {
 
     public BoomerangItem(Item.Properties props) {
-        super(props.durability(200));
+        super(props.durability(350));
     }
 
     @Override

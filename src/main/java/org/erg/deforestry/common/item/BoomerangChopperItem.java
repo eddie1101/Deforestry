@@ -20,11 +20,6 @@ public class BoomerangChopperItem extends BoomerangItem {
     }
 
     @Override
-    public int getUseDuration(ItemStack stack) {
-        return 72000;
-    }
-
-    @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int usedDuration) {
         float durationDelta = (float) this.getUseDuration(stack) - usedDuration;
         float power = durationDelta / 20.0f;
@@ -34,6 +29,8 @@ public class BoomerangChopperItem extends BoomerangItem {
         } else if (power < 0.2f) {
             return;
         }
+
+        power *= 2;
 
         int slot = entity instanceof Player ? ((Player) entity).getInventory().selected : -1;
         BoomerangChopperEntity boomerang = new BoomerangChopperEntity(
