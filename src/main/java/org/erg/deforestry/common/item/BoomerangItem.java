@@ -44,7 +44,6 @@ public class BoomerangItem extends Item {
             return;
         }
 
-        Deforestry.LOGGER.debug("Inventory: " + ((Player) entity).getInventory().selected);
         int slot = entity instanceof Player ? ((Player) entity).getInventory().selected : -1;
         BoomerangEntity boomerang = new BoomerangEntity(
                 (EntityType<? extends BoomerangEntity>) DeforestryEntityTypes.BOOMERANG_ENTITY.get(),

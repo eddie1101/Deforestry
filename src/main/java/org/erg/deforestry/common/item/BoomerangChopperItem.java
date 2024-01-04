@@ -35,11 +35,13 @@ public class BoomerangChopperItem extends BoomerangItem {
             return;
         }
 
+        int slot = entity instanceof Player ? ((Player) entity).getInventory().selected : -1;
         BoomerangChopperEntity boomerang = new BoomerangChopperEntity(
                 (EntityType<? extends BoomerangEntity>) DeforestryEntityTypes.BOOMERANG_CHOPPER_ENTITY.get(),
                 level,
                 entity,
                 stack,
+                slot,
                 power
         );
         if (entity instanceof Player player) {
