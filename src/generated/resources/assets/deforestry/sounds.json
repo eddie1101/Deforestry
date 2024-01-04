@@ -23,6 +23,12 @@
     ],
     "subtitle": "Chainsaw revving"
   },
+  "chainsaw_starting": {
+    "sounds": [
+      "deforestry:chainsaw_starting"
+    ],
+    "subtitle": "Chainsaw starting"
+  },
   "remote_chopper_sound": {
     "sounds": [
       "deforestry:remote_chopper_sound"
