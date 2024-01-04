@@ -11,9 +11,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.Level;
+import org.erg.deforestry.Deforestry;
 import org.erg.deforestry.common.entity.BoomerangEntity;
 import org.erg.deforestry.common.registries.DeforestryEntityTypes;
 import org.erg.deforestry.common.registries.DeforestrySounds;
+import org.erg.deforestry.data.providers.DeforestryLanguageProvider;
 
 public class BoomerangItem extends Item {
 
@@ -32,9 +34,9 @@ public class BoomerangItem extends Item {
     }
 
     @Override
-    public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int usedDuration) {
-        float durationDelta = (float) this.getUseDuration(stack) - usedDuration;
-        float power = durationDelta / 20.0f;
+    public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int ticksRemaining) {
+        float duration = (float) this.getUseDuration(stack) - ticksRemaining;
+        float power = duration / 20.0f;
         power = (power * power + power * 2.0f) / 3.0f;
         if (power > 1.0f) {
             power = 1.0f;
@@ -42,11 +44,14 @@ public class BoomerangItem extends Item {
             return;
         }
 
+        Deforestry.LOGGER.debug("Inventory: " + ((Player) entity).getInventory().selected);
+        int slot = entity instanceof Player ? ((Player) entity).getInventory().selected : -1;
         BoomerangEntity boomerang = new BoomerangEntity(
                 (EntityType<? extends BoomerangEntity>) DeforestryEntityTypes.BOOMERANG_ENTITY.get(),
                 level,
                 entity,
                 stack,
+                slot,
                 power
         );
         if (entity instanceof Player player) {
@@ -58,6 +63,7 @@ public class BoomerangItem extends Item {
         level.playSound(null, entity, DeforestrySounds.BOOMERANG_THROW.get(), SoundSource.PLAYERS, 0.5f + power, 1.0f + power / 2.0f);
     }
 
+    @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         player.startUsingItem(hand);
         return InteractionResultHolder.consume(player.getItemInHand(hand));
