@@ -29,20 +29,20 @@ import org.erg.deforestry.common.registries.DeforestrySounds;
 public class BoomerangEntity extends Projectile {
 
     public static final int MAX_DAMAGE_DIFFERENTIAL = 5;
-    private static final double P = 0.0072d, I = 0.0012d, D = 0.0650d;
+    protected static final double P = 0.0072d, I = 0.0012d, D = 0.0650d;
 
-    private Vec3 positionErrorIntegral = new Vec3(0.0d, 0.0d, 0.0d);
+    protected Vec3 positionErrorIntegral = new Vec3(0.0d, 0.0d, 0.0d);
 
-    private boolean moving = true;
-    private int flyingSoundPlayed = 0;
-    private int tickStamp = 0;
-    private int tickTimeout = 0;
-    private float launchRadius = 0;
-    private int entitiesPierced = 0;
+    protected boolean moving = true;
+    protected int flyingSoundPlayed = 0;
+    protected int tickStamp = 0;
+    protected int tickTimeout = 0;
+    protected float launchRadius = 0;
+    protected int entitiesPierced = 0;
 
-    private final int minDamage;
-    private int itemSlot;
-    private final ItemStack boomerangItemStack;
+    protected int minDamage;
+    protected int itemSlot;
+    protected final ItemStack boomerangItemStack;
 
     BoomerangState lastState;
     BoomerangState currentState;

@@ -20,17 +20,20 @@ import org.erg.deforestry.data.providers.DeforestryLanguageProvider;
 public class BoomerangItem extends Item {
 
     public BoomerangItem(Item.Properties props) {
-        super(props.durability(200));
+        super(props.durability(350));
     }
 
+    @Override
     public UseAnim getUseAnimation(ItemStack stack) {
         return UseAnim.BOW;
     }
 
+    @Override
     public int getUseDuration(ItemStack stack) {
         return 72000;
     }
 
+    @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int ticksRemaining) {
         float duration = (float) this.getUseDuration(stack) - ticksRemaining;
         float power = duration / 20.0f;
@@ -41,7 +44,6 @@ public class BoomerangItem extends Item {
             return;
         }
 
-        Deforestry.LOGGER.debug("Inventory: " + ((Player) entity).getInventory().selected);
         int slot = entity instanceof Player ? ((Player) entity).getInventory().selected : -1;
         BoomerangEntity boomerang = new BoomerangEntity(
                 (EntityType<? extends BoomerangEntity>) DeforestryEntityTypes.BOOMERANG_ENTITY.get(),
