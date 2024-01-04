@@ -67,8 +67,8 @@ public class Config
             .defineInRange("boomerangRange", 16, 0, 512);
 
     private static final ModConfigSpec.IntValue BOOMERANG_LIFESPAN = BUILDER
-            .comment("\nThe time in ticks (20 ticks/second) that the boomerang can attempt to seek its owner for.\n[0-1200]")
-            .defineInRange("boomerangLifespan", 200, 0, 1200);
+            .comment("\nThe time in ticks (20 ticks/second) that the boomerang can attempt to seek its owner for.\n[0-72000]")
+            .defineInRange("boomerangLifespan", 200, 0, 72000);
 
     private static final ModConfigSpec.IntValue BOOMERANG_OWNER_TIMEOUT = BUILDER
             .comment("""
