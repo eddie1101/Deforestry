@@ -173,7 +173,7 @@ public class ChainsawItem extends Item {
                         level.addFreshEntity(new ItemEntity(level, player.getX(), player.getY(), player.getZ(), choppedLog));
                     }
 
-                    for(BlockPos leaf: DeforestryUtil.getConnectedLeavesAroundLog(logs.get(i), level)) {
+                    for(BlockPos leaf: DeforestryUtil.getConnectedLeavesAroundLog(logs.get(i), level, logs)) {
                         BlockState blockState = level.getBlockState(leaf);
                         for(ItemStack item: blockState.getDrops(lootBuilder)) {
                             if(!player.addItem(item)) {
