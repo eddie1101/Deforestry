@@ -87,7 +87,7 @@ public class DeforestryUtil {
     public static List<BlockPos> getConnectedLeavesAroundLog(BlockPos log, Level level, final List<BlockPos> originTree) {
         Set<BlockPos> leaves = new HashSet<>();
         Stack<BlockPos> toSearch = new Stack<>();
-        List<List<BlockPos>> surroundingTrees = new ArrayList<>();
+        List<BlockPos> surroundingTreeLogs = new ArrayList<>();
         toSearch.add(log);
 
         AABB range = AABB.encapsulatingFullBlocks(log.below(4).west(4).south(4), log.above(4).east(4).north(4));
@@ -103,8 +103,8 @@ public class DeforestryUtil {
                             range.contains(pos.getX(), pos.getY(), pos.getZ())) {
                         toSearch.add(pos);
                     }
-                } else if(level.getBlockState(pos).is(BlockTags.LOGS) && !originTree.contains(pos) && !logInTrees(pos, surroundingTrees)) {
-                    surroundingTrees.add(getLogsInTree(level.getBlockState(pos).getBlock(), pos, level));
+                } else if(level.getBlockState(pos).is(BlockTags.LOGS) && !originTree.contains(pos) && !surroundingTreeLogs.contains(pos)) {
+                    surroundingTreeLogs.addAll(getLogsInTree(level.getBlockState(pos).getBlock(), pos, level));
                 }
             }
 
@@ -112,52 +112,37 @@ public class DeforestryUtil {
                 leaves.add(center);
         }
 
-        List<BlockPos> boundingAxes = new ArrayList<>();
-        for(List<BlockPos> tree: surroundingTrees) {
-            int highX = Integer.MIN_VALUE, highZ = Integer.MIN_VALUE, lowX = Integer.MAX_VALUE, lowZ = Integer.MAX_VALUE;
-            for(BlockPos pos: tree) {
-                if(pos.getX() > highX)
-                    highX = pos.getX();
-                if(pos.getX() < lowX)
-                    lowX = pos.getX();
-                if(pos.getZ() > highZ)
-                    highZ = pos.getZ();
-                if(pos.getZ() < lowZ)
-                    lowZ = pos.getZ();
-            }
+        List<AABB> boundingBoxes = new ArrayList<>();
 
-            int midX = lowX + ((highX - lowX) / 2);
-            int midZ = lowZ + ((highZ - lowZ) / 2);
+        for(BlockPos axis: surroundingTreeLogs) {
+            AABB validLeaves = new AABB(log).inflate(4.0d);
 
-            boundingAxes.add(new BlockPos(midX, log.getY(), midZ));
-        }
-
-        AABB validLeaves = new AABB(log).inflate(4.0d);
-
-        for(BlockPos axis: boundingAxes) {
             BlockPos diff = axis.subtract(log);
             BlockPos midpoint = log.offset(diff.getX() / 2, diff.getY() / 2, diff.getZ() / 2);
             BlockPos midpointDiff = midpoint.subtract(log);
 
             int xSigned = midpointDiff.getX() < 0 ? -1 : 1;
+            int ySigned = midpointDiff.getY() < 0 ? -1 : 1;
             int zSigned = midpointDiff.getZ() < 0 ? -1 : 1;
 
             int contractAmountX = Math.abs(midpointDiff.getX()) < 4 && Math.abs(midpointDiff.getX()) > 0 ? (4 * xSigned) - midpointDiff.getX() : 0;
+            int contractAmountY = Math.abs(midpointDiff.getY()) < 4 && Math.abs(midpointDiff.getY()) > 0 ? (4 * ySigned) - midpointDiff.getY() : 0;
             int contractAmountZ = Math.abs(midpointDiff.getZ()) < 4 && Math.abs(midpointDiff.getZ()) > 0 ? (4 * zSigned) - midpointDiff.getZ() : 0;
 
-            validLeaves = validLeaves.contract(contractAmountX, 0, contractAmountZ);
+            boundingBoxes.add(validLeaves.contract(contractAmountX, contractAmountY, contractAmountZ));
 
-            Deforestry.LOGGER.debug("bounding midpoint: " + midpoint.getX() + " " + midpoint.getZ());
-            Deforestry.LOGGER.debug("bounding midpoint delta: " + midpointDiff.getX() + " " + midpointDiff.getZ());
-            Deforestry.LOGGER.debug("Contract Amounts: " + contractAmountX + " " + contractAmountZ);
+            Deforestry.LOGGER.debug("bounding midpoint: " + midpoint.getX() + " " + midpoint.getY() + " " + midpoint.getZ());
+            Deforestry.LOGGER.debug("bounding midpoint delta: " + midpointDiff.getX() + " " + midpointDiff.getY() + " " + midpointDiff.getZ());
+            Deforestry.LOGGER.debug("Contract Amounts: " + contractAmountX + " " + contractAmountY + " " + contractAmountZ);
+        }
+
+        AABB validLeaves = new AABB(log).inflate(4.0d);
+        for(AABB box: boundingBoxes) {
+            validLeaves = box.intersect(validLeaves);
         }
 
         AABB finalValidLeaves = validLeaves;
         leaves.removeIf(e -> !finalValidLeaves.contains(e.getX(), e.getY(), e.getZ()));
-
-        for(BlockPos axis: boundingAxes) {
-            Deforestry.LOGGER.debug("Bounding Axis: " + axis.getX() + " " + axis.getZ());
-        }
 
         return new ArrayList<>(leaves);
     }
