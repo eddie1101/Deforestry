@@ -58,7 +58,7 @@ public class BoomerangChopperEntity extends BoomerangEntity {
 
                     for (int i = 0; i < logsToChop; i++) {
                         level.destroyBlock(logs.get(i), true, player);
-                        for (BlockPos leaf : DeforestryUtil.getConnectedLeavesAroundLog(logs.get(i), level)) {
+                        for (BlockPos leaf : DeforestryUtil.getConnectedLeavesAroundLog(logs.get(i), level, logs)) {
                             level.destroyBlock(leaf, true, player);
                         }
                     }
