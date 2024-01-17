@@ -188,7 +188,7 @@ public class BoomerangEntity extends Projectile {
                 }
             }
 
-            Vec3 targetPos = ownerEntity.getPosition(1.0f);
+            Vec3 targetPos = ownerEntity.position();
             if(ownerEntity instanceof Player) {
                 targetPos = targetPos.add(0.0f, 1.0f, 0.0f);
             }
@@ -201,11 +201,9 @@ public class BoomerangEntity extends Projectile {
             Vec3 acceleration = positionDelta.scale(-P).add(positionErrorIntegral.scale(-I)).add(velocity.scale(-D));
 
             //Prevents "whiplash" when the PID controller takes over, which can look very glitchy
-            double easing;
+            double easing = 1d;
             if(timeAlive < 5) {
                 easing = timeAlive / 5d;
-            } else {
-                easing = 1d;
             }
 
             Vec3 newVelocity = this.getDeltaMovement().add(acceleration.scale(easing));
@@ -221,7 +219,6 @@ public class BoomerangEntity extends Projectile {
 
     protected void handleReturnedState() {
         if(getOwner() instanceof Player player && !level().isClientSide()) {
-            Deforestry.LOGGER.debug("" + player.getInventory().getItem(itemSlot) + " " + player.getInventory().getItem(itemSlot).isEmpty());
             int slot = player.getInventory().getItem(itemSlot).isEmpty() ? itemSlot : -1;
             if (!player.getInventory().add(slot, this.boomerangItemStack)) {
                 level().addFreshEntity(new ItemEntity(this.level(), player.getX(), player.getY(), player.getZ(), boomerangItemStack));
@@ -332,7 +329,7 @@ public class BoomerangEntity extends Projectile {
 
         int fire = boomerangItemStack.getEnchantmentLevel(Enchantments.FIRE_ASPECT);
         if(fire > 0) {
-            hitEntity.setSecondsOnFire(5 * fire);
+            hitEntity.setSecondsOnFire(4 * fire);
         }
 
     }
