@@ -323,7 +323,7 @@ public class BoomerangEntity extends Projectile {
         }
 
         int piercing = boomerangItemStack.getEnchantmentLevel(Enchantments.PIERCING);
-        if(++entitiesPierced >= piercing && !level().isClientSide()) {
+        if(++entitiesPierced > piercing && !level().isClientSide()) {
             this.bounceOffEntity(hitEntity);
         }
 
@@ -344,28 +344,29 @@ public class BoomerangEntity extends Projectile {
         }
     }
 
-    //Placeholder, barely works at all (use trig damnit)
+    //Placeholder, works better than the old placeholder
     public void bounceOffEntity(Entity entity) {
-        AABB boundingBox = entity.getBoundingBox();
-        Vec3 entityCenter = boundingBox.getCenter();
-        Vec3 pos = this.position();
-        if(!boundingBox.intersects(this.getBoundingBox())) {
-            pos = pos.add(this.getDeltaMovement());
-        }
 
-        double dx = Math.abs(entityCenter.x - pos.x);
-        double dy = Math.abs(entityCenter.y - pos.y);
-        double dz = Math.abs(entityCenter.z - pos.z);
+        // OPTIMAL SOLUTION:
+        // "elliptical cow"
+        // construct equation for ellipsoid from bounding box dimensions
+        // - each side length becomes a semi-axis (Might be too small?)
+        // - or find ellipsoid that circumscribes bounding box (might be too big?)
+        // - or do the former, and calculate a scaling factor based on the volume of the bounding box for a good in-between
+        // project boomerang position onto it's nearest position on ellipsoid surface
+        // - create line from boomerang motion vector
+        // - solve for intersection of line with ellipsoid
+        // - take the closest result
+        // find surface normal at projected position, use that as bounce vector
 
-        double min = Math.min(Math.min(dx, dy), dz);
+        // WHAT I WILL DO INSTEAD (BECAUSE IT IS FAR EASIER):
+        // subtract positions
 
-        if(min == dx) {
-            this.setDeltaMovement(this.getDeltaMovement().multiply(-1.0d, 1.0d, 1.0d).scale(0.8d));
-        } else if(min == dy) {
-            this.setDeltaMovement(this.getDeltaMovement().multiply(1.0d, -1.0d, 1.0d).scale(0.8d));
-        } else if(min == dz) {
-            this.setDeltaMovement(this.getDeltaMovement().multiply(1.0d, 1.0d, -1.0d).scale(0.8d));
-        }
+        Vec3 boomerangPos = this.getBoundingBox().getCenter();
+        AABB entityBB = entity.getBoundingBox();
+        Vec3 entityPos = new Vec3(entityBB.getCenter().x, entity.getY() + entityBB.getYsize() / 2, entityBB.getCenter().z);
+        Vec3 bounceDirection = new Vec3(boomerangPos.x - entityPos.x, boomerangPos.y - entityPos.y, boomerangPos.z - entityPos.z);
+        this.setDeltaMovement(this.getDeltaMovement().add(bounceDirection.normalize().scale(this.getDeltaMovement().length())).scale(0.8d));
     }
 
 
