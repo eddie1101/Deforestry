@@ -375,7 +375,7 @@ public class BoomerangEntity extends Projectile {
 
     @Override
     protected void defineSynchedData() {
-
+//        TODO: implement this shit https://forge.gemwire.uk/wiki/Networking_with_Entities
     }
 
     @Override
